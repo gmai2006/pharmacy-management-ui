@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
-  LayoutDashboard, Users, ShoppingCart, Package, BarChart3, Settings, 
-  Bell, Search, Menu, X, ChevronRight, TrendingUp, TrendingDown,
-  DollarSign, ShoppingBag, UserPlus, Activity,
+  LayoutDashboard, Users, Package, BarChart3, Settings, 
+  Bell, Search, Menu, X, ChevronRight,
   Eye,
   TriangleAlert, 
 } from 'lucide-react';
 import PharmacyWorkflow from './pages/PharmacyFlow';
-import Inventory from './pages/Inventory'
-import PatientsPage from './pages/PatientPage';
-import UsersPage from './UsersPage';
 import UserSummary from './pages/UserSummary';
 import PharmacistReview from './pages/PharmacistReviewPage';
 import PharmacyPOSSystem from './pages/PharmacyPOSSystem';
 import PharmacyFinancialReports from './pages/PharmacyFinancialReports';
 import ClinicalAlertSystem from './pages/ClinicalAlertSystem';
+import PickupDashboard from './pages/pickup/PickupDashboard';
 
 import './index.css';
 import './App.css';
+import PharmacyInventory from './pages/PharmacyInventory';
+import PatientsPage from './pages/PatientSummary';
+import UserPage from './pages/UserPage';
 
 // Mock Router Components (simulating React Router)
 const BrowserRouter = ({ children }) => children;
@@ -38,6 +38,9 @@ const Routes = ({ children }) => {
 
   return matchedRoute || null;
 };
+
+const WS_URL = "/ws/messages";
+
 
 const Route = ({ path, element }) => element;
 
@@ -68,121 +71,6 @@ const useLocation = () => {
   return { pathname };
 };
 
-// Page Components
-function DashboardPage() {
-  const stats = [
-    { label: 'Total Revenue', value: '$45,231', change: '+12.5%', trend: 'up', icon: DollarSign },
-    { label: 'Orders', value: '1,234', change: '+8.2%', trend: 'up', icon: ShoppingBag },
-    { label: 'New Users', value: '892', change: '-3.1%', trend: 'down', icon: UserPlus },
-    { label: 'Active Sessions', value: '573', change: '+15.3%', trend: 'up', icon: Activity },
-  ];
-
-  const recentOrders = [
-    { id: '#ORD-001', customer: 'John Doe', amount: '$125.00', status: 'completed' },
-    { id: '#ORD-002', customer: 'Jane Smith', amount: '$89.50', status: 'processing' },
-    { id: '#ORD-003', customer: 'Mike Johnson', amount: '$210.00', status: 'pending' },
-    { id: '#ORD-004', customer: 'Sarah Williams', amount: '$156.75', status: 'completed' },
-    { id: '#ORD-005', customer: 'Tom Brown', amount: '$99.99', status: 'processing' },
-  ];
-
-  const getStatusColor = (status) => {
-    const colors = {
-      completed: 'bg-green-100 text-green-700',
-      processing: 'bg-blue-100 text-blue-700',
-      pending: 'bg-yellow-100 text-yellow-700',
-    };
-    return colors[status];
-  };
-
-  return (
-    <>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
-        <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-lg ${
-                stat.trend === 'up' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                <stat.icon size={24} className={
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                } />
-              </div>
-              <div className={`flex items-center gap-1 text-sm font-medium ${
-                stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {stat.trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                {stat.change}
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-            <div className="text-sm text-gray-600">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {order.customer}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {order.amount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-blue-600 hover:text-blue-800 font-medium">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  );
-}
-
-
 function GenericPage({ title, description, icon: Icon }) {
   return (
     <div className="flex items-center justify-center h-full">
@@ -197,10 +85,51 @@ function GenericPage({ title, description, icon: Icon }) {
   );
 }
 
+
 // Main App Component
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const [message, setMessage] = useState('');
+const wsRef = useRef(null);
+  // const ws = new WebSocket("ws://localhost:8080/ws/echo");
+  const ws = new WebSocket(WS_URL);
+
+
+// useEffect(() => {
+//     wsRef.current = new WebSocket(WS_URL);
+//     wsRef.current.onmessage = (e) => {
+//       const msg = e.data;
+//       setMessage((prev) => [...prev.slice(-99), msg]); // keep last 100
+//     };
+//     wsRef.current.onclose = () => console.log("WebSocket disconnected");
+//     return () => wsRef.current.close();
+//   }, []);
+
+  // useEffect(() => {
+  
+  //   ws.onopen = () => {
+  //     console.log("Connected to WebSocket server");
+  //     setSocket(ws);
+  //     ws.send("Hello from React client!");
+  //   };
+
+  //   ws.onmessage = (event) => {
+  //     setMessage((prev) => [...prev, { from: "server", text: event.data }]);
+  //   };
+
+  //   ws.onclose = () => {
+  //     console.log("WebSocket closed");
+  //   };
+
+  //   ws.onerror = (err) => {
+  //     console.error("WebSocket error", err);
+  //   };
+
+  //   wsRef.current = ws;
+
+  //   return () => ws.close();
+  // }, []);
 
   const menuItems = [
     { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -288,8 +217,10 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     placeholder="Search..."
+                    value={message} onChange={(e) => setMessage(e.target.value)} 
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -308,11 +239,12 @@ export default function AdminDashboard() {
           <div className="flex-1 overflow-y-auto p-6">
             <Routes>
               <Route path="/" element={<PharmacyWorkflow />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/users" element={<UserSummary />} />
+              <Route path="/inventory" element={<PharmacyInventory />} />
+              <Route path="/users" element={<UserPage />} />
               <Route path="/patients" element={<PatientsPage />} />
               <Route path="/review" element={<PharmacistReview />} />
-              <Route path="/pos" element={<PharmacyPOSSystem />} />
+              <Route path="/pos" element={<PickupDashboard />} />
+              <Route path="/pickup" element={<PharmacyPOSSystem />} />
               <Route path="/alert" element={<ClinicalAlertSystem />} />
               <Route path="/analytics" element={<PharmacyFinancialReports icon={BarChart3} />} />
               <Route path="/settings" element={<GenericPage title="Settings" description="Settings panel coming soon" icon={Settings} />} />

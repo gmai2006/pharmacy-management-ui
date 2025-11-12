@@ -23,8 +23,8 @@ import { mkConfig, generateCsv, download } from 'export-to-csv'; //or use your l
 
 import init from "../init";
 
-const getdataTarget = '/' + init.appName + '/rest/' + 'users/select/100';
-const createDataTarget = '/' + init.appName + '/rest/' + 'users/';
+const getdataTarget = '/' + init.appName + '/api/' + 'users/select/100';
+const createDataTarget = '/' + init.appName + '/api/' + 'users/';
 const headers = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
@@ -62,7 +62,6 @@ const UserSummary = () => {
   };
 
   const fetchData = async () => {
-      
     try {
       const response = await fetch(getdataTarget, {headers: headers,}); 
       
