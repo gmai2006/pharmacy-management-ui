@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Package, FileText, DollarSign, User, Pill, ArrowRight, Filter, Search } from 'lucide-react';
+import { Package, FileText, DollarSign } from 'lucide-react';
 import init from '../../init';
 import Header from './Header';
 import PrescriptionProcessTab from './PrescriptionProcessTab';
@@ -10,45 +10,7 @@ import ClaimTab from './ClaimTab';
 
 export default function PharmacyWorkflow() {
   const [activeTab, setActiveTab] = useState('processing');
-  const [workflowSteps, setWorkflowSteps] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
-
-  const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
-  const createDataTarget = '/' + init.appName + '/api/' + 'inventoryitems/';
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  };
-
-  const fetchData = async () => {
-    try {
-      const response = await fetch(getdataTarget, { headers: headers, });
-      const jsonData = await response.json();
-      const filteredData = jsonData.filter(d => d.workflowStepId <= 6);
-      setPrescriptions(filteredData);
-      console.log(filteredData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchQueues = async () => {
-    try {
-      const response = await fetch('/' + init.appName + '/api/' + 'workflowsteps/selectAll', { headers: headers, });
-      const jsonData = await response.json();
-      const filteredWorkflowSteps = jsonData.filter(data => data.workflowId === 1);
-      setWorkflowSteps(filteredWorkflowSteps);
-      console.log(filteredWorkflowSteps);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchQueues();
-    fetchData();
-  }, []);
-
+  
 
   const getWorkflowStepColor = (wokflowStepId) => {
     const colors = {
@@ -67,7 +29,7 @@ export default function PharmacyWorkflow() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Header prescriptions = {prescriptions} />
+      <Header />
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex gap-1 px-6">
@@ -107,7 +69,7 @@ export default function PharmacyWorkflow() {
       {/* Content */}
       <div className="p-6">
         {activeTab === 'processing' && (
-          <PrescriptionProcessTab prescriptions = {prescriptions} workflowSteps={workflowSteps} setPrescriptions={setPrescriptions} />
+          <PrescriptionProcessTab  />
         )}
 
         {activeTab === 'inventory' && (

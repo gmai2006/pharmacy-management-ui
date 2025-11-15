@@ -2,8 +2,48 @@ import React, { useEffect, useState } from 'react';
 import { AlertCircle, Filter, Clock } from 'lucide-react';
 import init from '../../init';
 
-const PrescriptionProcessTab = ({ prescriptions, workflowSteps, setPrescriptions }) => {
+const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
+const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+};
+
+const PrescriptionProcessTab = () => {
     const [filterStatus, setFilterStatus] = useState(0);
+    const [workflowSteps, setWorkflowSteps] = useState([]);
+    const [prescriptions, setPrescriptions] = useState([]);
+    
+
+    const fetchData = async () => {
+        try {
+            const response = await fetch(getdataTarget, { headers: headers, });
+            const jsonData = await response.json();
+            const filteredData = jsonData.filter(d => d.workflowStepId <= 6);
+            setPrescriptions(filteredData);
+            console.log(filteredData);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    const fetchQueues = async () => {
+        try {
+            const response = await fetch('/' + init.appName + '/api/' + 'workflowsteps/selectAll', { headers: headers, });
+            const jsonData = await response.json();
+            const filteredWorkflowSteps = jsonData.filter(data => data.workflowId === 1);
+            setWorkflowSteps(filteredWorkflowSteps);
+            console.log(filteredWorkflowSteps);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchQueues();
+        fetchData();
+    }, []);
+
+
     const moveToNextStep = (id) => {
         setPrescriptions(prescriptions.map(rx =>
             rx.prescriptionId === id ? { ...rx, workflowStepId: rx.workflowStepId + 1 } : rx

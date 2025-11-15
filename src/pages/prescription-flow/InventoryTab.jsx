@@ -91,7 +91,7 @@ const InventoryTab = ({ getWorkflowStepColor }) => {
     return (
         <div className="grid gap-4">
             {inventory.map(item => (
-                <div key={item.batchId  + item.itemId + item.lotNumber} className="bg-white rounded-lg shadow-sm p-4">
+                <div key={crypto.randomUUID()} className="bg-white rounded-lg shadow-sm p-4">
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <div className="font-semibold text-gray-900 mb-1">{item.name} {item.strength}</div>

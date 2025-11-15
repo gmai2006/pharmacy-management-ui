@@ -16,8 +16,8 @@ import PickupDashboard from './pages/pickup/PickupDashboard';
 import './index.css';
 import './App.css';
 import PharmacyInventory from './pages/PharmacyInventory';
-import PatientsPage from './pages/PatientSummary';
-import UserPage from './pages/UserPage';
+import UserPage from './pages/user/UserPage';
+import PatientPage from './pages/patient/PatientPage';
 
 // Mock Router Components (simulating React Router)
 const BrowserRouter = ({ children }) => children;
@@ -241,7 +241,7 @@ const wsRef = useRef(null);
               <Route path="/" element={<PharmacyWorkflow />} />
               <Route path="/inventory" element={<PharmacyInventory />} />
               <Route path="/users" element={<UserPage />} />
-              <Route path="/patients" element={<PatientsPage />} />
+              <Route path="/patients" element={<PatientPage />} />
               <Route path="/review" element={<PharmacistReview />} />
               <Route path="/pos" element={<PickupDashboard />} />
               <Route path="/pickup" element={<PharmacyPOSSystem />} />
