@@ -1,60 +1,10 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Package, FileText, DollarSign, User, Pill, ArrowRight, Filter, Search } from 'lucide-react';
-import init from '../../init';
-
-
-`
-{
-    "itemId": "990e8400-e29b-41d4-a716-446655440003",
-    "batchId": "550e8400-e29b-41d4-a716-446655440003",
-    "ndc": "0006-0057-03",
-    "sku": "SKU-AMOXICILLIN-500",
-    "name": "Amoxicillin",
-    "strength": "500mg",
-    "form": "capsule",
-    "packSize": 30,
-    "attributes": {
-      "dea_class": null,
-      "controlled": false,
-      "requires_rx": true,
-      "manufacturer": "GlaxoSmithKline"
-    },
-    "lotNumber": "LOT-2024-003",
-    "expiryDate": [2026, 2, 28],
-    "quantityOnHand": 120,
-    "location": "Shelf C3",
-    "wholesalerId": 1,
-    "daysSinceLastOrder": 1763012357.08333,
-    "minLevel": 40,
-    "maxLevel": 150,
-    "preferredWholesalers": [1, 3, 2],
-    "daysUntilExpiry": 108,
-    "expiryStatus": "OK",
-    "needsReorder": false,
-    "reorderQuantity": 30,
-    "daysSinceLastOrder": 0,
-    "orderFrequencyStatus": "RECENTLY_ORDERED",
-    "itemCreatedAt": 1705057200,
-    "batchCreatedAt": 1763012357.08333,
-    "criticalReorder": false,
-    "recentlyOrdered": true,
-    "stockPercentage": 80,
-    "expiringCritical": false
-  },
-
-    `
+import init from "../../init";
 
 const InventoryTab = ({ getWorkflowStepColor }) => {
     const [inventory, setInventory] = useState([]);
-
-    // const [inventory, setInventory] = useState([
-    //     { batchId: 'INV001', name: 'Lisinopril 10mg', quantityOnHand: 45, needsReorder: 50, orderFrequencyStatus: 'low', manufacturer: 'McKesson', daysSinceLastOrder: '2 days ago' },
-    //     { batchId: 'INV002', name: 'Metformin 500mg', quantityOnHand: 320, needsReorder: 100, orderFrequencyStatus: 'adequate', manufacturer: 'Cardinal Health', daysSinceLastOrder: '1 week ago' },
-    //     { batchId: 'INV003', name: 'Amoxicillin 500mg', quantityOnHand: 12, needsReorder: 30, orderFrequencyStatus: 'critical', manufacturer: 'AmerisourceBergen', daysSinceLastOrder: '3 days ago' },
-    //     { batchId: 'INV004', name: 'Atorvastatin 20mg', quantityOnHand: 250, needsReorder: 75, orderFrequencyStatus: 'adequate', manufacturer: 'McKesson', daysSinceLastOrder: '5 days ago' }
-    // ]);
 
     const headers = {
         'Content-Type': 'application/json',
@@ -63,7 +13,7 @@ const InventoryTab = ({ getWorkflowStepColor }) => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch('/pharmacy/api/view/inventoryview/100', { headers: headers, });
+            const response = await fetch(`/${init.appName}/api/view/inventoryview/100`, { headers: headers, });
             const jsonData = await response.json();
             setInventory(jsonData);
             console.log(jsonData);
@@ -113,16 +63,16 @@ const InventoryTab = ({ getWorkflowStepColor }) => {
                         </div>
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Reorder Point</div>
-                            <div className="text-lg font-semibold text-gray-700">{item.needsReorder}</div>
+                            <div className="text-lg font-semibold text-gray-700">{item.maxLevel}</div>
                         </div>
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Last Order</div>
-                            <div className="text-sm text-gray-700">{item.daysSinceLastOrder}</div>
+                            <div className="text-sm text-gray-700">{new Date(item.lastOrder*1000).toLocaleString()}</div>
                         </div>
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Status</div>
                             <div className="text-sm font-medium text-gray-900">
-                                {item.quantityOnHand < item.needsReorder ? 'Reorder Needed' : 'Sufficient'}
+                                {item.needsReorder ? 'Reorder Needed' : 'Sufficient'}
                             </div>
                         </div>
                     </div>
@@ -130,9 +80,9 @@ const InventoryTab = ({ getWorkflowStepColor }) => {
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
                         <div
                             className={`h-2 rounded-full transition-all ${item.quantityOnHand < item.needsReorder * 0.5 ? 'bg-red-500' :
-                                item.quantityOnHand < item.needsReorder ? 'bg-orange-500' : 'bg-green-500'
+                                item.needsReorder ? 'bg-orange-500' : 'bg-green-500'
                                 }`}
-                            style={{ width: `${Math.min((item.quantityOnHand / item.needsReorder) * 100, 100)}%` }}
+                            style={{ width: `${Math.min((item.quantityOnHand / item.minLevel) * 100, 100)}%` }}
                         />
                     </div>
 

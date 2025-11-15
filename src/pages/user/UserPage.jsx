@@ -28,20 +28,13 @@ const roleOptions = {
 const UserPage = () => {
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(undefined);
     const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
-    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-    const [notification, setNotification] = useState(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState(undefined);
+    const [notification, setNotification] = useState(undefined);
     const [searchFilter, setSearchFilter] = useState('');
-    const [formData, setFormData] = useState({
-        username: '',
-        displayName: '',
-        email: '',
-        roleId: 1,
-        isActive: true,
-    });
 
     const getRoles = async () => {
         try {
@@ -94,71 +87,22 @@ const UserPage = () => {
         setNotification({ message, type });
     };
 
-    const generateId = () => {
-        return `${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
-    };
-
-    const handleSubmit = (formData) => {
-        // // e.preventDefault();
-        // if (!formData.username || !formData.displayName || !formData.email) {
-        //     showNotification('Username, display name, and email are required', 'error');
-        //     return;
-        // }
-
-        // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // if (!emailRegex.test(formData.email)) {
-        //     showNotification('Please enter a valid email address', 'error');
-        //     return;
-        // }
-
-        if (formData.id) {
-            setUsers(
-                users.map((u) =>
-                    u.id === editingId
-                        ? { ...formData, id: editingId, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt }
-                        : u
-                )
-            );
-            setEditingId(null);
+    const handleSubmit = (userData) => {
+        if (userData.id) {
+            handleUpdateUser(userData);
             showNotification('User updated successfully', 'success');
         } else {
-            const now = Date.now();
-            setUsers([
-                ...users,
-                {
-                    ...formData,
-                    id: generateId(),
-                    createdAt: now,
-                    lastLoginAt: now,
-                },
-            ]);
+            handleAddUser(userData);
             showNotification('User created successfully', 'success');
         }
 
-        resetForm();
         setShowModal(false);
         setCurrentPage(1);
-    };
-
-    const resetForm = () => {
-        setFormData({
-            username: '',
-            displayName: '',
-            email: '',
-            roleId: 1,
-            isActive: true,
-        });
+        setSelectedUser(undefined);
     };
 
     const handleEdit = (user) => {
-        setFormData({
-            username: user.username,
-            displayName: user.displayName,
-            email: user.email,
-            roleId: user.roleId,
-            isActive: user.isActive,
-        });
-        setEditingId(user.id);
+        setSelectedUser(user);
         setShowModal(true);
     };
 
@@ -167,7 +111,7 @@ const UserPage = () => {
     };
 
     const confirmDelete = (id) => {
-        setUsers(users.filter((u) => u.id !== id));
+        handleDeleteUser(id);
         setDeleteConfirmId(null);
         showNotification('User deleted successfully', 'success');
     };
@@ -198,6 +142,7 @@ const UserPage = () => {
     };
 
     const formatDate = (timestamp) => {
+        if (!timestamp) return '';
         const date = new Date(timestamp);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -207,6 +152,91 @@ const UserPage = () => {
             minute: '2-digit',
         });
     };
+
+    // Handle delete user
+    const handleDeleteUser = async (id) => {
+        try {
+            const response = await fetch(`${userUrl}${id}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete user');
+            }
+
+            setUsers(prev => prev.filter(user => user.id !== id));
+            setDeleteConfirmId(undefined);
+            showNotification('User deleted successfully', 'success');
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showNotification(error.message || 'Failed to delete user', 'error');
+        } finally {
+        }
+    };
+
+    // Handle add user
+    const handleAddUser = async (userData) => {
+        try {
+            const response = await fetch(userUrl, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify({
+                    ...userData,
+                    roleId: parseInt(userData.roleId)
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create user');
+            }
+
+            const newUser = await response.json();
+            setUsers(prev => [newUser, ...prev]);
+            setShowModal(false);
+            setSelectedUser(undefined);
+            showNotification('User created successfully', 'success');
+        } catch (error) {
+            console.error('Error adding user:', error);
+            showNotification(error.message || 'Failed to create user', 'error');
+        } finally {
+        }
+    };
+
+    const handleUpdateUser = async (data) => {
+        try {
+            const response = await fetch(`${userUrl}`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    ...data,
+                    roleId: parseInt(data.roleId)
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update user');
+            }
+
+            const updatedUser = await response.json();
+            setUsers(prev =>
+                prev.map(user =>
+                    user.id === data.id ? updatedUser : user
+                )
+            );
+            setShowModal(false);
+            showNotification('User updated successfully', 'success');
+        } catch (error) {
+            console.error('Error updating user:', error);
+            showNotification(error.message || 'Failed to update user', 'error');
+        } finally {
+
+        }
+    };
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-8">
@@ -225,8 +255,8 @@ const UserPage = () => {
                 <div className="flex gap-4 mb-8 flex-wrap items-center">
                     <button
                         onClick={() => {
-                            resetForm();
-                            setEditingId(null);
+                            // resetForm();
+                            // setEditingId(null);
                             setShowModal(true);
                         }}
                         className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-medium"
@@ -251,130 +281,7 @@ const UserPage = () => {
 
                 {/* Form Modal */}
                 {showModal && (
-                    // <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    //     <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-                    //         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
-                    //             <h2 className="text-2xl font-bold text-gray-900">
-                    //                 {editingId ? 'Edit User' : 'Add New User'}
-                    //             </h2>
-                    //             <button
-                    //                 onClick={() => {
-                    //                     setShowModal(false);
-                    //                     setEditingId(null);
-                    //                     resetForm();
-                    //                 }}
-                    //                 className="text-gray-500 hover:text-gray-700 text-2xl"
-                    //             >
-                    //                 ×
-                    //             </button>
-                    //         </div>
-
-                    //         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    //             {/* Username and Display Name */}
-                    //             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    //                 <div>
-                    //                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                    //                         Username *
-                    //                     </label>
-                    //                     <input
-                    //                         type="text"
-                    //                         name="username"
-                    //                         value={formData.username}
-                    //                         onChange={handleInputChange}
-                    //                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    //                         placeholder="e.g., jdoe"
-                    //                         required
-                    //                     />
-                    //                 </div>
-                    //                 <div>
-                    //                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                    //                         Display Name *
-                    //                     </label>
-                    //                     <input
-                    //                         type="text"
-                    //                         name="displayName"
-                    //                         value={formData.displayName}
-                    //                         onChange={handleInputChange}
-                    //                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    //                         placeholder="e.g., John Doe"
-                    //                         required
-                    //                     />
-                    //                 </div>
-                    //             </div>
-
-                    //             {/* Email */}
-                    //             <div>
-                    //                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    //                     Email Address *
-                    //                 </label>
-                    //                 <input
-                    //                     type="email"
-                    //                     name="email"
-                    //                     value={formData.email}
-                    //                     onChange={handleInputChange}
-                    //                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    //                     placeholder="user@pharmacy.com"
-                    //                     required
-                    //                 />
-                    //             </div>
-
-                    //             {/* Role and Status */}
-                    //             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    //                 <div>
-                    //                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                    //                         Role
-                    //                     </label>
-                    //                     <select
-                    //                         name="roleId"
-                    //                         value={formData.roleId}
-                    //                         onChange={handleInputChange}
-                    //                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    //                     >
-                    //                         <option value={1}>Admin</option>
-                    //                         <option value={2}>Pharmacist</option>
-                    //                         <option value={3}>Technician</option>
-                    //                         <option value={4}>Viewer</option>
-                    //                     </select>
-                    //                 </div>
-                    //                 <div className="flex items-end">
-                    //                     <label className="flex items-center gap-3 cursor-pointer">
-                    //                         <input
-                    //                             type="checkbox"
-                    //                             name="isActive"
-                    //                             checked={formData.isActive}
-                    //                             onChange={handleInputChange}
-                    //                             className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
-                    //                         />
-                    //                         <span className="text-gray-700 font-medium">Active User</span>
-                    //                     </label>
-                    //                 </div>
-                    //             </div>
-
-                    //             {/* Form Actions */}
-                    //             <div className="flex gap-4 justify-end pt-6 border-t border-gray-200">
-                    //                 <button
-                    //                     type="button"
-                    //                     onClick={() => {
-                    //                         setShowModal(false);
-                    //                         setEditingId(null);
-                    //                         resetForm();
-                    //                     }}
-                    //                     className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
-                    //                 >
-                    //                     Cancel
-                    //                 </button>
-                    //                 <button
-                    //                     type="submit"
-                    //                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
-                    //                 >
-                    //                     {editingId ? 'Update User' : 'Create User'}
-                    //                 </button>
-                    //             </div>
-                    //         </form>
-                    //     </div>
-                    // </div>
-
-                    <UserDialog user={formData} editingId={editingId} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
+                    <UserDialog roles={roles} user={selectedUser} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
                 )}
 
                 {/* Delete Confirmation Modal */}
@@ -606,20 +513,6 @@ const UserPage = () => {
 
                 {/* Role Summary */}
                 {users.length > 0 && (
-                    //   <div className="mt-8 bg-indigo-50 border border-indigo-200 rounded-lg p-6">
-                    //     <h3 className="text-lg font-semibold text-indigo-900 mb-3">User Role Summary</h3>
-                    //     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    //       {roles.map((role) => {
-                    //         const count = users.filter((u) => u.roleId === role.id).length;
-                    //         return (
-                    //           <div key={role.id} className="bg-white rounded-lg p-4 border border-indigo-100">
-                    //             <p className="text-sm text-gray-600 mb-1">{role.name}</p>
-                    //             <p className="text-2xl font-bold text-indigo-600">{count}</p>
-                    //           </div>
-                    //         );
-                    //       })}
-                    //     </div>
-                    //   </div>
                     <UserSummary roles={roles} users={users} />
                 )}
             </div>

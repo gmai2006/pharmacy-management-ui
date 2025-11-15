@@ -8,7 +8,7 @@ import { Pill } from 'lucide-react';
         <div className="flex items-center gap-3">
           <Pill className="text-blue-600" size={32} />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">WSU Pharamcy Management System</h1>
+            <h1 className="text-2xl font-bold text-gray-900">WSU Pharmacy Management System</h1>
             <p className="text-sm text-gray-500">Prescription Workflow Management</p>
           </div>
         </div>

@@ -158,7 +158,7 @@ export default function PharmacyInventory() {
 
   // Helper functions
   const getTotalQuantity = (batches) => {
-    return batches && batches.reduce((sum, batch) => sum + batch.quantityOnHand, 0);
+    return batches && batches.map(batch => batch.quantityOnHand).reduce((sum, num) => sum + num, 0);
   };
 
   const getExpiryStatus = (expiryDate) => {
@@ -360,7 +360,7 @@ export default function PharmacyInventory() {
                       <div className="text-right">
                         <div className="text-sm text-gray-600">Total Quantity</div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {getTotalQuantity(item.batches)}
+                          {getTotalQuantity(item.inventoryBatches)}
                         </div>
                       </div>
 
@@ -410,7 +410,7 @@ export default function PharmacyInventory() {
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3">Inventory Batches</h4>
                       <div className="space-y-3">
-                        {item.batches.map((batch) => {
+                        {item.inventoryBatches.map((batch) => {
                           const expiryStatus = getExpiryStatus(batch.expiryDate);
                           return (
                             <div key={batch.id} className="bg-white rounded-lg border border-gray-200 p-4">

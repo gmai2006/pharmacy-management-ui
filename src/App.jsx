@@ -6,7 +6,6 @@ import {
   TriangleAlert, 
 } from 'lucide-react';
 import PharmacyWorkflow from './pages/prescription-flow/PharmacyFlow';
-import UserSummary from './pages/UserSummary';
 import PharmacistReview from './pages/PharmacistReviewPage';
 import PharmacyPOSSystem from './pages/PharmacyPOSSystem';
 import PharmacyFinancialReports from './pages/PharmacyFinancialReports';

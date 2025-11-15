@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Eye, EyeOff, CheckCircle, AlertCircle, XCircle, X } from 'lucide-react';
 
 import init from '../../init';
+import PatientDialog from './PatientDialog';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'patients/select/100';
-const createDataTarget = '/' + init.appName + '/api/' + 'inventoryitems/';
+const patientUrl = `/${init.appName}/api/patients/`;
 const headers = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
@@ -13,8 +14,8 @@ const headers = {
 const PatientPage = () => {
 
   const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(undefined);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [showSensitiveData, setShowSensitiveData] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -72,92 +73,16 @@ const PatientPage = () => {
     setNotification({ message, type });
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (name.startsWith('contact_')) {
-      const field = name.replace('contact_', '');
-      setFormData({
-        ...formData,
-        contact: { ...formData.contact, [field]: value },
-      });
-    } else if (name.startsWith('accessibility_')) {
-      const field = name.replace('accessibility_', '');
-      setFormData({
-        ...formData,
-        accessibilityPreferences: {
-          ...formData.accessibilityPreferences,
-          [field]: checked,
-        },
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: type === 'checkbox' ? checked : value,
-      });
-    }
-  };
-
-
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.firstName || !formData.lastName) {
-      showNotification('First name and last name are required', 'error');
-      return;
-    }
-
-    if (editingId) {
-      setPatients(
-        patients.map((p) =>
-          p.id === editingId
-            ? { ...formData, id: editingId, created_at: p.created_at }
-            : p
-        )
-      );
-      setEditingId(null);
-      showNotification('Patient updated successfully', 'success');
-    } else {
-      setPatients([
-        ...patients,
-        {
-          ...formData,
-          id: generateId(),
-          created_at: new Date().toISOString(),
-        },
-      ]);
-      showNotification('Patient created successfully', 'success');
-    }
-
-    resetForm();
+  const handleSubmit = (patientData) => {
+    if (patientData.id) handleUpdatePatient(patientData);
+    else handleAddPatient(patientData);
     setShowModal(false);
     setCurrentPage(1);
   };
 
-  const resetForm = () => {
-    setFormData({
-      mrn: '',
-      firstName: '',
-      lastName: '',
-      dob: '',
-      gender: '',
-      contact: {
-        phone: '',
-        email: '',
-        address: '',
-      },
-      isStudentRecord: false,
-      preferredLanguage: 'English',
-      accessibilityPreferences: {
-        large_print: false,
-        braille: false,
-        tts: false,
-      },
-    });
-  };
-
   const handleEdit = (patient) => {
-    setFormData(patient);
-    setEditingId(patient.id);
+    setSelectedPatient(patient);
+
     setShowModal(true);
   };
 
@@ -166,9 +91,7 @@ const PatientPage = () => {
   };
 
   const confirmDelete = (id) => {
-    setPatients(patients.filter((p) => p.id !== id));
-    setDeleteConfirmId(null);
-    showNotification('Patient deleted successfully', 'success');
+    handleDeletePatient(id);
   };
 
   const toggleSensitiveData = (id) => {
@@ -217,16 +140,100 @@ const PatientPage = () => {
     setCurrentPage(1);
   };
 
+  // Handle delete user
+  const handleDeletePatient = async (id) => {
+    try {
+      const response = await fetch(`${patientUrl}${id}`, {
+        method: 'DELETE',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete user');
+      }
+
+      setPatients(prev => prev.filter(user => user.id !== id));
+      setDeleteConfirmId(undefined);
+      showNotification('User deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      showNotification(error.message || 'Failed to delete user', 'error');
+    } finally {
+    }
+  };
+
+  // Handle add user
+  const handleAddPatient = async (patientData) => {
+    try {
+      const response = await fetch(patientUrl, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          ...patientData
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create user');
+      }
+
+      const newPatient = await response.json();
+      setPatients(prev => [newPatient, ...prev]);
+      setShowModal(false);
+      setSelectedPatient(undefined);
+      showNotification('User created successfully', 'success');
+    } catch (error) {
+      console.error('Error adding user:', error);
+      showNotification(error.message || 'Failed to create user', 'error');
+    } finally {
+    }
+  };
+
+  const handleUpdatePatient = async (data) => {
+    try {
+      const response = await fetch(`${patientUrl}`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          ...data
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update user');
+      }
+
+      const updatedPatient = await response.json();
+      setPatients(prev =>
+        prev.map(patient =>
+          patient.id === data.id ? updatedPatient : patient
+        )
+      );
+      setShowModal(false);
+      setSelectedPatient(undefined);
+      showNotification('User updated successfully', 'success');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      showNotification(error.message || 'Failed to update user', 'error');
+    } finally {
+
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Notification Toast */}
       {notification && (
         <div
           className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg text-white transition-all duration-300 animate-in ${notification.type === 'success'
-              ? 'bg-green-500'
-              : notification.type === 'error'
-                ? 'bg-red-500'
-                : 'bg-blue-500'
+            ? 'bg-green-500'
+            : notification.type === 'error'
+              ? 'bg-red-500'
+              : 'bg-blue-500'
             }`}
         >
           {notification.type === 'success' && <CheckCircle size={20} />}
@@ -246,8 +253,7 @@ const PatientPage = () => {
         <div className="flex gap-4 mb-8 flex-wrap items-center">
           <button
             onClick={() => {
-              resetForm();
-              setEditingId(null);
+              setSelectedPatient(undefined);
               setShowModal(true);
             }}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
@@ -272,234 +278,7 @@ const PatientPage = () => {
 
         {/* Form Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {editingId ? 'Edit Patient' : 'Add New Patient'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditingId(null);
-                    resetForm();
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {/* Personal Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Medical Record Number
-                    </label>
-                    <input
-                      type="text"
-                      name="mrn"
-                      value={formData.mrn}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      name="dob"
-                      value={formData.dob}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Gender and Language */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Gender
-                    </label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="M">Male</option>
-                      <option value="F">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Preferred Language
-                    </label>
-                    <select
-                      name="preferredLanguage"
-                      value={formData.preferredLanguage}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="English">English</option>
-                      <option value="Spanish">Spanish</option>
-                      <option value="French">French</option>
-                      <option value="Mandarin">Mandarin</option>
-                      <option value="Vietnamese">Vietnamese</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        name="contact_phone"
-                        value={formData.contact.phone}
-                        onChange={handleInputChange}
-                        placeholder="(555) 123-4567"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="contact_email"
-                        value={formData.contact.email}
-                        onChange={handleInputChange}
-                        placeholder="patient@example.com"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        name="contact_address"
-                        value={formData.contact.address}
-                        onChange={handleInputChange}
-                        placeholder="123 Main St, City, State"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Accessibility Preferences */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Accessibility Preferences</h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="accessibility_large_print"
-                        checked={formData.accessibilityPreferences.large_print}
-                        onChange={handleInputChange}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Large Print</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="accessibility_braille"
-                        checked={formData.accessibilityPreferences.braille}
-                        onChange={handleInputChange}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Braille</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="accessibility_tts"
-                        checked={formData.accessibilityPreferences.tts}
-                        onChange={handleInputChange}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Text-to-Speech</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* FERPA Flag */}
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isStudentRecord"
-                    checked={formData.isStudentRecord}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-gray-700 font-medium">Student Record (FERPA Protected)</span>
-                </label>
-
-                {/* Form Actions */}
-                <div className="flex gap-4 justify-end pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      setEditingId(null);
-                      resetForm();
-                    }}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    {editingId ? 'Update Patient' : 'Create Patient'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <PatientDialog data={selectedPatient} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
         )}
 
         {/* Delete Confirmation Modal */}
@@ -703,8 +482,8 @@ const PatientPage = () => {
                           key={page}
                           onClick={() => handlePageChange(page)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition ${currentPage === page
-                              ? 'bg-blue-600 text-white'
-                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                             }`}
                         >
                           {page}

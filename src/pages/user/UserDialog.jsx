@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-const UserDialog = ({ user, editingId, setShowModal, showNotification, addOrUpdate }) => {
+const UserDialog = ({ roles, user, setShowModal, showNotification, addOrUpdate }) => {
     const [localUser, setLocalUser] = useState(user);
+    const emptyUser = {
+        username: '',
+        displayName: '',
+        email: '',
+        roleId: 1,
+        isActive: true,
+    };
 
     useEffect(() => {
-        setLocalUser(user);
-    }, []);
+        const nullableUser = [user].filter(u => u != undefined).concat(emptyUser);
+        console.log(nullableUser[0])
+        setLocalUser(nullableUser[0]);
+    }, [user]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -30,22 +39,20 @@ const UserDialog = ({ user, editingId, setShowModal, showNotification, addOrUpda
         });
     };
 
-    return (
+    return localUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                 <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                        {editingId ? 'Edit User' : 'Add New User'}
+                        {localUser?.id ? 'Edit User' : 'Add New User'}
                     </h2>
                     <button
                         onClick={() => {
                             setShowModal(false);
-                            setEditingId(null);
-                            resetForm();
                         }}
                         className="text-gray-500 hover:text-gray-700 text-2xl"
                     >
-                        ×
+                        <X size={24} />
                     </button>
                 </div>
 
@@ -110,10 +117,11 @@ const UserDialog = ({ user, editingId, setShowModal, showNotification, addOrUpda
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             >
-                                <option value={1}>Admin</option>
-                                <option value={2}>Pharmacist</option>
-                                <option value={3}>Technician</option>
-                                <option value={4}>Viewer</option>
+                                {roles.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="flex items-end">
@@ -136,8 +144,6 @@ const UserDialog = ({ user, editingId, setShowModal, showNotification, addOrUpda
                             type="button"
                             onClick={() => {
                                 setShowModal(false);
-                                setEditingId(null);
-                                resetForm();
                             }}
                             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
                         >
@@ -147,7 +153,7 @@ const UserDialog = ({ user, editingId, setShowModal, showNotification, addOrUpda
                             type="submit"
                             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
                         >
-                            {editingId ? 'Update User' : 'Create User'}
+                            {localUser?.id ? 'Update User' : 'Create User'}
                         </button>
                     </div>
                 </form>
