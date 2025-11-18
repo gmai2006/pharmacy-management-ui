@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Eye, EyeOff, CheckCircle, AlertCircle, XCircle, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Eye, EyeOff, CheckCircle, AlertCircle, XCircle, X, Download } from 'lucide-react';
 
 import init from '../../init';
 import PatientDialog from './PatientDialog';
@@ -223,7 +223,83 @@ const PatientPage = () => {
     }
   };
 
+  // Export patients to CSV
+  const exportToCSV = () => {
+    if (patients.length === 0) {
+      showNotification('No patients to export', 'error');
+      return;
+    }
 
+    // Prepare CSV headers
+    const csvHeaders = [
+      'ID',
+      'First Name',
+      'Last Name',
+      'MRN',
+      'Date of Birth',
+      'Age',
+      'Gender',
+      'Email',
+      'Phone',
+      'Address',
+      'Preferred Language',
+      'FERPA Student Record',
+      'Large Print',
+      'Braille',
+      'Text-to-Speech'
+    ];
+
+    // Prepare CSV rows
+    const csvRows = patients.map(patient => {
+      const age = calculateAge(patient.dob);
+      return [
+        patient.id,
+        patient.firstName || '',
+        patient.lastName || '',
+        patient.mrn || '',
+        patient.dob ? new Date(patient.dob).toISOString().split('T')[0] : '',
+        age,
+        patient.gender || '',
+        patient.contact.email || '',
+        patient.contact.phone || '',
+        patient.contact.address || '',
+        patient.preferredLanguage || 'English',
+        patient.isStudentRecord ? 'Yes' : 'No',
+        patient.accessibilityPreferences.large_print ? 'Yes' : 'No',
+        patient.accessibilityPreferences.braille ? 'Yes' : 'No',
+        patient.accessibilityPreferences.tts ? 'Yes' : 'No'
+      ];
+    });
+
+    // Combine headers and rows
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map(row =>
+        row.map(cell =>
+          // Escape quotes and wrap in quotes if contains comma
+          typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))
+            ? `"${cell.replace(/"/g, '""')}"`
+            : cell
+        ).join(',')
+      )
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `patients_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification('Patients exported successfully', 'success');
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Notification Toast */}
@@ -271,8 +347,20 @@ const PatientPage = () => {
             }}
             className="flex-1 min-w-64 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          <div className="text-lg font-semibold text-gray-700">
-            Total Patients: <span className="text-blue-600">{patients.length}</span>
+
+          <div className="flex items-center gap-4">
+            <div className="text-lg font-semibold text-gray-700">
+              Total Patients: <span className="text-blue-600">{patients.length}</span>
+            </div>
+            <button
+              onClick={exportToCSV}
+              disabled={patients.length === 0}
+              className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+              title="Export patients to CSV"
+            >
+              <Download size={20} />
+              Export CSV
+            </button>
           </div>
         </div>
 
@@ -281,6 +369,7 @@ const PatientPage = () => {
           <PatientDialog data={selectedPatient} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
         )}
 
+     
         {/* Delete Confirmation Modal */}
         {deleteConfirmId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

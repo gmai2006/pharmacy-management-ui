@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Filter, Clock } from 'lucide-react';
 import init from '../../init';
+import PrescriptionFilter from './PrescriptionFilter';
+import Notification from '../../components/Notification';
+import BarcodePreviewDialog from '../../components/BarcodePreviewDialog';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
 const headers = {
@@ -12,7 +15,28 @@ const PrescriptionProcessTab = () => {
     const [filterStatus, setFilterStatus] = useState(0);
     const [workflowSteps, setWorkflowSteps] = useState([]);
     const [prescriptions, setPrescriptions] = useState([]);
-    
+    const [notification, setNotification] = useState(undefined);
+
+    // Barcode preview dialog state
+    const [barcodeDialog, setBarcodeDialog] = useState({
+        isOpen: false,
+        prescriptionId: null,
+        barcodeType: 'code128' // 'code128' or 'qrcode'
+    });
+
+    // Auto-dismiss notification after 3 seconds
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => {
+                setNotification(undefined);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification]);
+
+    const showNotification = (message, type = 'success') => {
+        setNotification({ message, type });
+    };
 
     const fetchData = async () => {
         try {
@@ -45,6 +69,8 @@ const PrescriptionProcessTab = () => {
 
 
     const moveToNextStep = (id) => {
+        const prescription = prescriptions.find(pres => pres.prescriptionId === id);
+        showNotification(`Successfully move to ${workflowSteps[prescription.workflowStepId + 1].displayName}`);
         setPrescriptions(prescriptions.map(rx =>
             rx.prescriptionId === id ? { ...rx, workflowStepId: rx.workflowStepId + 1 } : rx
         ).sort((a, b) => a.workflowStepId - b.workflowStepId));
@@ -84,6 +110,24 @@ const PrescriptionProcessTab = () => {
     };
 
 
+    // Open barcode preview dialog
+    const openBarcodeDialog = (userId, barcodeType = 'code128') => {
+        setBarcodeDialog({
+            isOpen: true,
+            prescriptionId: userId,
+            barcodeType: barcodeType
+        });
+    };
+
+    // Close barcode preview dialog
+    const closeBarcodeDialog = () => {
+        setBarcodeDialog({
+            isOpen: false,
+            prescriptionId: null,
+            barcodeType: 'code128'
+        });
+    };
+
     const filteredPrescriptions = filterStatus === 0
         ? prescriptions
         : prescriptions.filter(rx => rx.workflowStepId === filterStatus);
@@ -91,33 +135,13 @@ const PrescriptionProcessTab = () => {
 
     return (
         <div>
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                <div className="flex items-center gap-4">
-                    <Filter size={18} className="text-gray-400" />
-                    <button
-                        onClick={() => setFilterStatus(0)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                    >
-                        All ({prescriptions.length})
-                    </button>
-                    {
-                        workflowSteps.map(step => (
-                            (
-                                <button key={step.id}
-                                    onClick={() => setFilterStatus(step.id)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === step.id ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    {step.displayName} ({prescriptions.filter(pre => pre.workflowStepId === step.id).length})
-                                </button>
-                            )
-                        ))
-                    }
+            {/* Notification Toast */}
+            {notification && (
+                <Notification notification={notification} />
+            )}
 
-                </div>
-            </div>
+            {/* Filters */}
+            <PrescriptionFilter data={prescriptions} filterList={workflowSteps} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
 
             {/* Queue */}
             <div className="grid gap-4">
@@ -183,9 +207,17 @@ const PrescriptionProcessTab = () => {
                                     )
                                 }
                                 {
+                                    rx.workflowStepId === 5 && (
+                                        <button 
+                                            onClick={() => openBarcodeDialog(rx.prescriptionId)}
+                                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                                            Print Barcode
+                                        </button>
+                                    )
+                                }
+                                {
                                     rx.workflowStepId == workflowSteps.length && (
                                         <button
-                                            // onClick={() => moveToNextStep(rx.prescriptionId)}
                                             className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
                                         >
                                             Complete Pickup
@@ -196,6 +228,15 @@ const PrescriptionProcessTab = () => {
                     </div>
                 ))}
             </div>
+
+            {/* Barcode Preview Dialog */}
+            <BarcodePreviewDialog
+                isOpen={barcodeDialog.isOpen}
+                prescriptionId={barcodeDialog.prescriptionId}
+                barcodeType={barcodeDialog.barcodeType}
+                onClose={closeBarcodeDialog}
+            />
+
         </div>
     )
 }

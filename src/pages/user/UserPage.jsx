@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Download } from 'lucide-react';
 
 import init from "../../init";
 import UserSummary from '../user/UserSummary';
-import Notification from './Notification';
+import Notification from '../../components/Notification';
 import UserDialog from './UserDialog';
 
 const headers = {
@@ -13,6 +13,8 @@ const headers = {
 const userSelectUrl = '/' + init.appName + '/api/' + 'users/select/100';
 const roleUrl = '/' + init.appName + '/api/' + 'roles/selectAll';
 const userUrl = `/${init.appName}/api/users/`;
+
+const getUserByEmail = '/' + init.appName + '/api/' + 'users/byEmail/';
 
 const roleOptions = {
     1: { color: 'bg-red-100 text-red-800' },
@@ -68,9 +70,24 @@ const UserPage = () => {
         }
     };
 
+    const getUser = async (email) => {
+        try {
+            const response = await fetch(`${getUserByEmail}${email}`, { headers: headers });
+            if (!response.ok) throw new Error('Failed to fetch users');
+            const jsonData = await response.json();
+            console.log('Users fetched:', jsonData);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            showNotification('Failed to load users', 'error');
+        } finally {
+
+        }
+    };
+
     useEffect(() => {
         getRoles();
         getUsers();
+        getUser(`paul.mai@datascience9.com`);
     }, []);
 
     // Auto-dismiss notification after 3 seconds
@@ -114,6 +131,61 @@ const UserPage = () => {
         handleDeleteUser(id);
         setDeleteConfirmId(null);
         showNotification('User deleted successfully', 'success');
+    };
+
+    // Export users to CSV
+    const exportToCSV = () => {
+        if (users.length === 0) {
+            showNotification('No users to export', 'error');
+            return;
+        }
+
+        // Prepare CSV headers
+        const csvHeaders = ['ID', 'Display Name', 'Username', 'Email', 'Role', 'Status', 'Created At', 'Last Login At'];
+        
+        // Prepare CSV rows
+        const csvRows = users.map(user => {
+            const role = roles.find(r => r.id === user.roleId)?.name || 'Unknown';
+            const status = user.isActive ? 'Active' : 'Inactive';
+            return [
+                user.id,
+                user.displayName || '',
+                user.username,
+                user.email,
+                role,
+                status,
+                user.createdAt ? new Date(user.createdAt).toISOString() : '',
+                user.lastLoginAt ? new Date(user.lastLoginAt).toISOString() : ''
+            ];
+        });
+
+        // Combine headers and rows
+        const csvContent = [
+            csvHeaders.join(','),
+            ...csvRows.map(row => 
+                row.map(cell => 
+                    // Escape quotes and wrap in quotes if contains comma
+                    typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))
+                        ? `"${cell.replace(/"/g, '""')}"` 
+                        : cell
+                ).join(',')
+            )
+        ].join('\n');
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Users exported successfully', 'success');
     };
 
     // Filter users based on search
@@ -255,8 +327,6 @@ const UserPage = () => {
                 <div className="flex gap-4 mb-8 flex-wrap items-center">
                     <button
                         onClick={() => {
-                            // resetForm();
-                            // setEditingId(null);
                             setShowModal(true);
                         }}
                         className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-medium"
@@ -274,9 +344,25 @@ const UserPage = () => {
                         }}
                         className="flex-1 min-w-64 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
-                    <div className="text-lg font-semibold text-gray-700">
+                    {/* <div className="text-lg font-semibold text-gray-700">
                         Total Users: <span className="text-indigo-600">{users.length}</span>
+                    </div> */}
+
+                    <div className="flex items-center gap-4">
+                        <div className="text-lg font-semibold text-gray-700">
+                            Total Users: <span className="text-indigo-600">{users.length}</span>
+                        </div>
+                        <button
+                            onClick={exportToCSV}
+                            disabled={users.length === 0}
+                            className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+                            title="Export users to CSV"
+                        >
+                            <Download size={20} />
+                            Export CSV
+                        </button>
                     </div>
+
                 </div>
 
                 {/* Form Modal */}
