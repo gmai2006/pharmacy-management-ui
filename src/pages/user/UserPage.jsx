@@ -5,6 +5,7 @@ import init from "../../init";
 import UserSummary from '../user/UserSummary';
 import Notification from '../../components/Notification';
 import UserDialog from './UserDialog';
+import {convertJavaLocalDateTimeToDate} from '../../util';
 
 const headers = {
     'Content-Type': 'application/json',
@@ -84,10 +85,13 @@ const UserPage = () => {
         }
     };
 
+    const getAll = async () => {
+        await getRoles();
+        await getUsers();
+        await getUser(`paul.mai@datascience9.com`);
+    }
     useEffect(() => {
-        getRoles();
-        getUsers();
-        getUser(`paul.mai@datascience9.com`);
+        getAll();
     }, []);
 
     // Auto-dismiss notification after 3 seconds
@@ -469,10 +473,10 @@ const UserPage = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {formatDate(user.createdAt)}
+                                                {user.createdAt}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {formatDate(user.lastLoginAt)}
+                                                {user.lastLoginAt}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex gap-2">

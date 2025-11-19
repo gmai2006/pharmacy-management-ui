@@ -1,8 +1,31 @@
 import { Shield } from 'lucide-react';
 
-const Header = ({filteredAlerts}) => {
-    return (
-         <div className="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+const Header = ({ filteredAlerts }) => {
+  return (
+    <div>
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Clinical Alert System</h1>
+                <p className="text-sm text-gray-500">Patient Safety & Medication Monitoring</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                Active Alerts {filteredAlerts.length}
+              </div>
+           
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* <div className="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
         <div className="mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -24,7 +47,8 @@ const Header = ({filteredAlerts}) => {
             </div>
           </div>
         </div>
-      </div>
-    )
+      </div> */}
+    </div>
+  )
 };
 export default Header;

@@ -13,7 +13,7 @@ const AlertFilter = ({alertCategories, tooltipState, setTooltipState, activeCate
                                 onMouseLeave={() => setTooltipState({ visible: false, categoryId: undefined })}
                                 onClick={() => setActiveCategory(category.alertRuleId)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeCategory === category.alertRuleId
-                                    ? 'bg-red-600 text-white shadow-md'
+                                    ? 'bg-green-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >

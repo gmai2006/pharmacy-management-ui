@@ -1,16 +1,9 @@
-const getFormValues = (data) => {
-    const jsonString = JSON.stringify(data, (key, value) => value === null ? undefined : value);
-    return JSON.parse(jsonString);
-}
-
 export const formatDate = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     const result = date.toISOString().substring(0, 10);
     return result;
 };
-
-export default getFormValues;
 
 export const calculateAge = (dob) => {
     if (!dob) return 'N/A';
@@ -25,13 +18,9 @@ export const calculateAge = (dob) => {
 };
 
 export const convertJavaLocalDateTimeToDate = (arr) => {
-    return new Date(
-        javaLocalDateTime[0],
-        javaLocalDateTime[1] - 1, // JavaScript months are 0-indexed
-        javaLocalDateTime[2],
-        javaLocalDateTime[3],
-        javaLocalDateTime[4],
-        javaLocalDateTime[5],
-        javaLocalDateTime[6] / 1000000 // Convert nanoseconds to milliseconds
-    );
+    if (!arr || arr.length === 0) return 'No Date';
+    const [year, month, day, hour = 0, minute = 0, second = 0] = arr;
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    console.log(date);
+    return date.toDateString();
 };

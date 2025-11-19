@@ -20,7 +20,6 @@ import PharmacyInventory from './PharmacyInventory';
 import UserPage from './user/UserPage';
 import PatientPage from './patient/PatientPage';
 import AlertPage from './alert/AlertPage';
-import TestWebSocket from './TestWebSocket';
 
 import { useUser } from "../context/UserContext";
 
@@ -91,6 +90,8 @@ function GenericPage({ title, description, icon: Icon }) {
 }
 
 import init from "../init";
+import DirMarginDashboard from './report/DIRMarginDashboard';
+import StationInfo from '../components/StationInfo';
 
 const headers = {
   'Content-Type': 'application/json',
@@ -107,6 +108,7 @@ export default function AdminDashboard({ setUser }) {
   const location = useLocation();
   const [message, setMessage] = useState('');
   const wsRef = useRef(null);
+  const [stationId, setStationId] = useState(undefined);
 
   const menuItems = [
     { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -226,10 +228,10 @@ export default function AdminDashboard({ setUser }) {
                   <Bell size={20} className="text-gray-600" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">AD</span>
-                </div>
-                <span className="text-sm text-gray-700">Welcome, {appUser?.displayName || 'Invalid User'}</span>
+               
+                <span className="text-sm text-gray-700">{appUser?.displayName || 'Invalid User'}</span>
+                <StationInfo appUser={appUser} setStationId={setStationId}/>
+                <span className="text-sm text-gray-700">Station {stationId}</span>
                 <button
                   onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -253,7 +255,7 @@ export default function AdminDashboard({ setUser }) {
               <Route path="/alert" element={<AlertPage />} />
               <Route path="/analytics" element={<PharmacyFinancialReports icon={BarChart3} />} />
               {/* <Route path="/test" element={<TestWebSocket />} /> */}
-              <Route path="/settings" element={<GenericPage title="Settings" description="Settings panel coming soon" icon={Settings} />} />
+              <Route path="/settings" element={<DirMarginDashboard title="Settings" description="Settings panel coming soon" icon={Settings} />} />
             </Routes>
           </div>
         </div>

@@ -471,7 +471,7 @@ export default function PharmacyPOSSystem() {
                 <p className="text-sm text-gray-500">Real-time Prescription Management</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                 {activeStation.toUpperCase()}
               </div>
@@ -481,7 +481,7 @@ export default function PharmacyPOSSystem() {
                 <option value="station-3">Station 3</option>
                 <option value="station-4">Station 4</option>
               </select>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
