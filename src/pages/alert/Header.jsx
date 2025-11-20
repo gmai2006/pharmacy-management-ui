@@ -4,7 +4,7 @@ const Header = ({ filteredAlerts }) => {
   return (
     <div>
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-600 p-2 rounded-lg">
@@ -16,7 +16,7 @@ const Header = ({ filteredAlerts }) => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="bg-orange-100 text-red-500 px-3 py-1 rounded-full text-sm font-medium">
                 Active Alerts {filteredAlerts.length}
               </div>
            

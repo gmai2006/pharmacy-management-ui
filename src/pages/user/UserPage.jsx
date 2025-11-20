@@ -5,7 +5,7 @@ import init from "../../init";
 import UserSummary from '../user/UserSummary';
 import Notification from '../../components/Notification';
 import UserDialog from './UserDialog';
-import {convertJavaLocalDateTimeToDate} from '../../util';
+import {convertJavaLocalDateTimeToDate} from '../../utils/util';
 
 const headers = {
     'Content-Type': 'application/json',

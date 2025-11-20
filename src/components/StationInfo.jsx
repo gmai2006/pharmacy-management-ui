@@ -1,7 +1,6 @@
 // components/StationInfo.js
 import React, { useState, useEffect } from 'react';
 import DeviceFingerprintService from '../utils/fingerprinting';
-// import axios from 'axios';
 import init from "../init";
 
 const headers = {

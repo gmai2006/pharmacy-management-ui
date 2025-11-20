@@ -75,23 +75,25 @@ const useLocation = () => {
   return { pathname };
 };
 
-function GenericPage({ title, description, icon: Icon }) {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div className="text-gray-400 mb-4">
-          <Icon size={64} className="mx-auto" />
-        </div>
-        <h3 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600">{description}</p>
-      </div>
-    </div>
-  );
-}
+// function GenericPage({ title, description, icon: Icon }) {
+//   return (
+//     <div className="flex items-center justify-center h-full">
+//       <div className="text-center">
+//         <div className="text-gray-400 mb-4">
+//           <Icon size={64} className="mx-auto" />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h3>
+//         <p className="text-gray-600">{description}</p>
+//       </div>
+//     </div>
+//   );
+// }
 
 import init from "../init";
 import DirMarginDashboard from './report/DIRMarginDashboard';
-import StationInfo from '../components/StationInfo';
+// import StationInfo from '../components/StationInfo';
+import AuthLogViewer from './report/AuthLogViewer';
+import AdminAuthDashboard from './report/AdminAuthDashboard';
 
 const headers = {
   'Content-Type': 'application/json',
@@ -103,12 +105,11 @@ const getUserByEmail = '/' + init.appName + '/api/' + 'users/byEmail/';
 // Main App Component
 export default function AdminDashboard({ setUser }) {
   // const { user, isAuthenticated, isLoading, logout } = useAuth0();
-  const { user, appUser, isAuthenticated, isLoading, login, logout } = useUser();
+  const { user, appUser, isAuthenticated, isLoading, stationName, login, logout } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const [message, setMessage] = useState('');
   const wsRef = useRef(null);
-  const [stationId, setStationId] = useState(undefined);
 
   const menuItems = [
     { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -120,7 +121,8 @@ export default function AdminDashboard({ setUser }) {
     { id: 'pickup', path: '/pickup', icon: TriangleAlert, label: 'Pickup' },
     { id: 'alert', path: '/alert', icon: TriangleAlert, label: 'Alert' },
     { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    // { id: 'test', path: '/test', icon: TriangleAlert, label: 'Test' },
+    { id: 'logs', path: '/logs', icon: TriangleAlert, label: 'Auth Logs' },
+    { id: 'systemlogs', path: '/systemlogs', icon: TriangleAlert, label: 'Auth Dashboard' },
     { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
   ];
   const getUser = async (email) => {
@@ -230,11 +232,10 @@ export default function AdminDashboard({ setUser }) {
                 </button>
                
                 <span className="text-sm text-gray-700">{appUser?.displayName || 'Invalid User'}</span>
-                <StationInfo appUser={appUser} setStationId={setStationId}/>
-                <span className="text-sm text-gray-700">Station {stationId}</span>
+                <span className="text-sm text-gray-700">Station {stationName}</span>
                 <button
                   onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Logout
                 </button>
@@ -254,7 +255,8 @@ export default function AdminDashboard({ setUser }) {
               <Route path="/pickup" element={<PharmacyPOSSystem />} />
               <Route path="/alert" element={<AlertPage />} />
               <Route path="/analytics" element={<PharmacyFinancialReports icon={BarChart3} />} />
-              {/* <Route path="/test" element={<TestWebSocket />} /> */}
+              <Route path="/logs" element={<AuthLogViewer />} />
+              <Route path="/systemlogs" element={<AdminAuthDashboard />} />
               <Route path="/settings" element={<DirMarginDashboard title="Settings" description="Settings panel coming soon" icon={Settings} />} />
             </Routes>
           </div>

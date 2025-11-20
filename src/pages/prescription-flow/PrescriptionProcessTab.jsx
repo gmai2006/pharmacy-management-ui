@@ -6,10 +6,26 @@ import Notification from '../../components/Notification';
 import BarcodePreviewDialog from '../../components/BarcodePreviewDialog';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
+const workflowlogurl = '/' + init.appName + '/api/' + 'prescriptionworkflowlogs/';
 const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
 };
+
+const createPrescriptionWorkflowLogs = async (prescriptionId, userId, from, to, queueName, changeReason) => {
+  return {
+    "prescriptionId": prescriptionId,
+    "fromStatus": from,
+    "toStatus": to,
+    "queueName": queueName,
+    "changedBy": userId,
+    "changeReason": changeReason,
+    "metadata": {
+      "priority": "normal",
+      "reviewer_notes": "Standard review process"
+    },
+  }
+}
 
 const PrescriptionProcessTab = () => {
     const [filterStatus, setFilterStatus] = useState(0);
@@ -62,11 +78,21 @@ const PrescriptionProcessTab = () => {
         }
     };
 
+    const getAllData = async () => {
+        await fetchQueues();
+        await fetchData();
+    }
+
     useEffect(() => {
-        fetchQueues();
-        fetchData();
+        getAllData();
     }, []);
 
+
+    const addPrescriptionWorkFlowLog = async (data) => {
+        axios.put(workflowlogurl, data)
+            .then(response => console.log(response.data))
+            .catch(error => console.error(error));
+    }
 
     const moveToNextStep = (id) => {
         const prescription = prescriptions.find(pres => pres.prescriptionId === id);
@@ -208,7 +234,7 @@ const PrescriptionProcessTab = () => {
                                 }
                                 {
                                     rx.workflowStepId === 5 && (
-                                        <button 
+                                        <button
                                             onClick={() => openBarcodeDialog(rx.prescriptionId)}
                                             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
                                             Print Barcode

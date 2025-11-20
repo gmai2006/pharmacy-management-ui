@@ -1,6 +1,6 @@
 
 
-const AlertFilter = ({alertCategories, tooltipState, setTooltipState, activeCategory, setActiveCategory }) => {
+const AlertFilter = ({ alertCategories, tooltipState, setTooltipState, activeCategory, setActiveCategory }) => {
     return (
         <div className="bg-white border-b shadow-sm">
             <div className="mx-auto px-4 py-3">
@@ -12,22 +12,34 @@ const AlertFilter = ({alertCategories, tooltipState, setTooltipState, activeCate
                                 onMouseEnter={() => setTooltipState({ visible: true, categoryId: category.alertRuleId.toString() })}
                                 onMouseLeave={() => setTooltipState({ visible: false, categoryId: undefined })}
                                 onClick={() => setActiveCategory(category.alertRuleId)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeCategory === category.alertRuleId
-                                    ? 'bg-green-600 text-white shadow-md'
+                                className={`px-6 py-3 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeCategory === category.alertRuleId
+                                    ? 'bg-yellow-50 hover:bg-yellow-100 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
-                                {category.ruleName}
+                                <div>
+                                    <p className="text-xs text-gray-600">{category.ruleName}</p>
+                                    <p className="font-bold text-green-900"><span
+                                        className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${activeCategory === category.alertRuleId
+                                            ? 'bg-white text-yellow-600'
+                                            : 'bg-red-100 text-yellow-700'
+                                            }`}
+                                    >
+                                        {category.count}
+                                    </span></p>
+                                </div>
+
+                                {/* {category.ruleName}
                                 {category.count > 0 && (
                                     <span
                                         className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${activeCategory === category.alertRuleId
-                                            ? 'bg-white text-red-600'
-                                            : 'bg-red-100 text-red-700'
+                                            ? 'bg-white text-yellow-600'
+                                            : 'bg-red-100 text-yellow-700'
                                             }`}
                                     >
                                         {category.count}
                                     </span>
-                                )}
+                                )} */}
                             </button>
                             {/* Tooltip */}
                             {tooltipState.visible && tooltipState.categoryId === category.alertRuleId && (

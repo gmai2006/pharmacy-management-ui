@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { formatDate } from '../../util';
+import { formatDate } from '../../utils/util';
 
 const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) => {
     const [localData, setLocalData] = useState(data);

@@ -3,35 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
 
-// ----------------------------
-// Dummy Data for UI Testing
-// ----------------------------
-const dummyData = [
-  {
-    prescriptionId: "RX-001",
-    totalPosAmount: 120.00,
-    totalPayments: 90.00,
-    totalDirFees: 8.50,
-    netAfterDirFees: 81.50,
-    posCreatedAt: "2025-01-01"
-  },
-  {
-    prescriptionId: "RX-002",
-    totalPosAmount: 280.00,
-    totalPayments: 240.00,
-    totalDirFees: 15.25,
-    netAfterDirFees: 224.75,
-    posCreatedAt: "2025-01-05"
-  },
-  {
-    prescriptionId: "RX-003",
-    totalPosAmount: 60.00,
-    totalPayments: 40.00,
-    totalDirFees: 4.25,
-    netAfterDirFees: 35.75,
-    posCreatedAt: "2025-01-10"
-  }
-];
+
 import init from "../../init";
 
 const getUrl = `/${init.appName}/api/view/prescriptiondirsummary/100`;

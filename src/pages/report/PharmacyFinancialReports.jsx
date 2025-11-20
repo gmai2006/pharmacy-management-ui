@@ -4,8 +4,8 @@ import init from "../../init";
 
 const getUrl = `/${init.appName}/api/view/transactionsummary/100`;
 const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
+  'Content-Type': 'application/json',
+  'Accept': 'application/json'
 };
 
 export default function PharmacyFinancialReports() {
@@ -19,7 +19,7 @@ export default function PharmacyFinancialReports() {
       setLoading(true);
       const response = await fetch(getUrl, { headers: headers });
       const jsonData = await response.json();
-      
+
       // Ensure data is an array
       const transactions = Array.isArray(jsonData) ? jsonData : [jsonData];
       setTransactionHistory(transactions);
@@ -40,7 +40,7 @@ export default function PharmacyFinancialReports() {
   const calculateReportData = () => {
     let filteredTransactions = transactionHistory;
     const today = new Date();
-    
+
     if (reportDateRange === 'today') {
       filteredTransactions = transactionHistory.filter(txn => {
         const txnDate = new Date(txn.createdAt * 1000);
@@ -276,17 +276,20 @@ export default function PharmacyFinancialReports() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="bg-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                  <BarChart3 className="w-8 h-8 " />
+                <div className="bg-white p-2 rounded-lg">
+
+                  <BarChart3 className="w-8 h-8 text-black" />
+
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white">Financial Reports</h1>
-                  <p className="text-blue-100 text-sm">Revenue and transaction analytics</p>
+                  <h1 className="text-2xl font-bold text-black">Financial Reports</h1>
+                  <p className="text-black text-sm">Revenue and transaction analytics</p>
+
                 </div>
               </div>
             </div>
@@ -317,11 +320,10 @@ export default function PharmacyFinancialReports() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          <div 
+          <div
             onClick={() => setSelectedMetric('revenue')}
-            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${
-              selectedMetric === 'revenue' ? 'border-green-500 shadow-md' : 'border-transparent hover:border-gray-200'
-            }`}
+            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${selectedMetric === 'revenue' ? 'border-green-500 shadow-md' : 'border-transparent hover:border-gray-200'
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
@@ -336,11 +338,10 @@ export default function PharmacyFinancialReports() {
             </p>
           </div>
 
-          <div 
+          <div
             onClick={() => setSelectedMetric('patients')}
-            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${
-              selectedMetric === 'patients' ? 'border-teal-500 shadow-md' : 'border-transparent hover:border-gray-200'
-            }`}
+            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${selectedMetric === 'patients' ? 'border-teal-500 shadow-md' : 'border-transparent hover:border-gray-200'
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-600">Unique Patients</h3>
@@ -352,11 +353,10 @@ export default function PharmacyFinancialReports() {
             <p className="text-xs text-gray-600">${reportData.avgRevenuePerPatient.toFixed(2)} avg per patient</p>
           </div>
 
-          <div 
+          <div
             onClick={() => setSelectedMetric('paid')}
-            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${
-              selectedMetric === 'paid' ? 'border-blue-500 shadow-md' : 'border-transparent hover:border-gray-200'
-            }`}
+            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${selectedMetric === 'paid' ? 'border-blue-500 shadow-md' : 'border-transparent hover:border-gray-200'
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-600">Total Paid</h3>
@@ -370,11 +370,10 @@ export default function PharmacyFinancialReports() {
             </p>
           </div>
 
-          <div 
+          <div
             onClick={() => setSelectedMetric('balance')}
-            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${
-              selectedMetric === 'balance' ? 'border-orange-500 shadow-md' : 'border-transparent hover:border-gray-200'
-            }`}
+            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${selectedMetric === 'balance' ? 'border-orange-500 shadow-md' : 'border-transparent hover:border-gray-200'
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-600">Balance Due</h3>
@@ -386,11 +385,10 @@ export default function PharmacyFinancialReports() {
             <p className="text-xs text-orange-600">Outstanding payments</p>
           </div>
 
-          <div 
+          <div
             onClick={() => setSelectedMetric('avg')}
-            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${
-              selectedMetric === 'avg' ? 'border-purple-500 shadow-md' : 'border-transparent hover:border-gray-200'
-            }`}
+            className={`bg-white rounded-lg shadow-sm border-2 p-6 cursor-pointer transition-all ${selectedMetric === 'avg' ? 'border-purple-500 shadow-md' : 'border-transparent hover:border-gray-200'
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-600">Avg Transaction</h3>
@@ -603,12 +601,11 @@ export default function PharmacyFinancialReports() {
                     <td className="py-3 px-4 text-sm text-gray-600">{txn.prescriberName}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{txn.drugName}</td>
                     <td className="py-3 px-4 text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        txn.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${txn.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
                         txn.paymentStatus === 'PARTIAL' ? 'bg-yellow-100 text-yellow-800' :
-                        txn.paymentStatus === 'REFUNDED' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          txn.paymentStatus === 'REFUNDED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
                         {txn.paymentStatus}
                       </span>
                     </td>
