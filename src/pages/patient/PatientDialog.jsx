@@ -4,6 +4,33 @@ import { formatDate } from '../../utils/util';
 
 const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) => {
     const [localData, setLocalData] = useState(data);
+    const [dobError, setDobError] = useState('');
+    const [zipcodeError, setZipcodeError] = useState('');
+
+    // US States list
+    const US_STATES = [
+        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+        'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+        'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+        'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+        'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC'
+    ];
+
+    const US_STATE_NAMES = {
+        'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+        'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+        'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+        'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+        'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+        'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+        'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+        'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+        'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+        'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+        'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+        'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+        'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia'
+    };
 
     const emptyData = {
         mrn: '',
@@ -15,6 +42,8 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
             phone: '',
             email: '',
             address: '',
+            state: '',
+            zipcode: '',
         },
         isStudentRecord: false,
         preferredLanguage: 'English',
@@ -27,9 +56,52 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
 
     useEffect(() => {
         const nullableData = [data].filter(u => u != undefined).concat(emptyData);
-
         setLocalData(nullableData[0]);
     }, []);
+
+    const validateDob = (dobValue) => {
+        if (!dobValue) {
+            setDobError('');
+            return true;
+        }
+
+        const dobDate = new Date(dobValue);
+        const today = new Date();
+
+        // Set time to midnight for accurate date comparison
+        today.setHours(0, 0, 0, 0);
+        dobDate.setHours(0, 0, 0, 0);
+
+        if (dobDate >= today) {
+            setDobError('Date of birth must be older than today');
+            return false;
+        }
+
+        setDobError('');
+        return true;
+    };
+
+    /**
+     * Validate US zipcode format
+     * Accepts: XXXXX or XXXXX-XXXX format
+     */
+    const validateZipcode = (zipcodeValue) => {
+        if (!zipcodeValue) {
+            setZipcodeError('');
+            return true;
+        }
+
+        // US Zipcode regex: 5 digits or 5 digits + 4 digits (ZIP+4)
+        const zipcodeRegex = /^\d{5}(-\d{4})?$/;
+
+        if (!zipcodeRegex.test(zipcodeValue)) {
+            setZipcodeError('Zipcode must be in format XXXXX or XXXXX-XXXX');
+            return false;
+        }
+
+        setZipcodeError('');
+        return true;
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -38,8 +110,20 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
             return;
         }
 
+        // Validate DOB is older than current date
+        if (!validateDob(localData.dob)) {
+            showNotification('Date of birth must be older than today', 'error');
+            return;
+        }
+
+        // Validate zipcode if provided
+        if (localData.contact.zipcode && !validateZipcode(localData.contact.zipcode)) {
+            showNotification('Please enter a valid zipcode (XXXXX or XXXXX-XXXX)', 'error');
+            return;
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(localData.contact.email)) {
+        if (localData.contact.email && !emailRegex.test(localData.contact.email)) {
             showNotification('Please enter a valid email address', 'error');
             return;
         }
@@ -50,10 +134,16 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
         const { name, value, type, checked } = e.target;
         if (name.startsWith('contact_')) {
             const field = name.replace('contact_', '');
+            const newValue = type === 'checkbox' ? checked : value;
             setLocalData({
                 ...localData,
-                contact: { ...localData.contact, [field]: value },
+                contact: { ...localData.contact, [field]: newValue },
             });
+
+            // Validate zipcode on change
+            if (field === 'zipcode') {
+                validateZipcode(newValue);
+            }
         } else if (name.startsWith('accessibility_')) {
             const field = name.replace('accessibility_', '');
             setLocalData({
@@ -64,10 +154,16 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
                 },
             });
         } else {
+            const newValue = type === 'checkbox' ? checked : value;
             setLocalData({
                 ...localData,
-                [name]: type === 'checkbox' ? checked : value,
+                [name]: newValue,
             });
+
+            // Validate DOB on change
+            if (name === 'dob') {
+                validateDob(newValue);
+            }
         }
     };
 
@@ -139,8 +235,15 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
                                 name="dob"
                                 value={formatDate(localData.dob)}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                                    dobError
+                                        ? 'border-red-500 focus:ring-red-500'
+                                        : 'border-gray-300 focus:ring-blue-500'
+                                }`}
                             />
+                            {dobError && (
+                                <p className="mt-2 text-sm text-red-600">{dobError}</p>
+                            )}
                         </div>
                     </div>
 
@@ -211,11 +314,9 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
-                           
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                            
+                        <div className="grid grid-cols-1 gap-4 mt-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Address
@@ -225,12 +326,53 @@ const PatientDialog = ({ data, setShowModal, showNotification, addOrUpdate }) =>
                                     name="contact_address"
                                     value={localData.contact.address}
                                     onChange={handleInputChange}
-                                    placeholder="123 Main St, City, State"
+                                    placeholder="123 Main St"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
                         </div>
 
+                        {/* State and Zipcode Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    State
+                                </label>
+                                <select
+                                    name="contact_state"
+                                    value={localData.contact.state || ''}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select State</option>
+                                    {US_STATES.map((stateCode) => (
+                                        <option key={stateCode} value={stateCode}>
+                                            {US_STATE_NAMES[stateCode]} ({stateCode})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Zipcode
+                                </label>
+                                <input
+                                    type="text"
+                                    name="contact_zipcode"
+                                    value={localData.contact.zipcode || ''}
+                                    onChange={handleInputChange}
+                                    placeholder="98101 or 98101-1234"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                                        zipcodeError
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-blue-500'
+                                    }`}
+                                />
+                                {zipcodeError && (
+                                    <p className="mt-2 text-sm text-red-600">{zipcodeError}</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Accessibility Preferences */}

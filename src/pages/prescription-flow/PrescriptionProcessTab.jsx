@@ -4,6 +4,9 @@ import init from '../../init';
 import PrescriptionFilter from './PrescriptionFilter';
 import Notification from '../../components/Notification';
 import BarcodePreviewDialog from '../../components/BarcodePreviewDialog';
+import { useUser } from "../../context/UserContext";
+import axios from 'axios';
+import ContactPrescriberDialog from './ContactPrescriberDialog';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
 const workflowlogurl = '/' + init.appName + '/api/' + 'prescriptionworkflowlogs/';
@@ -12,27 +15,35 @@ const headers = {
     'Accept': 'application/json'
 };
 
-const createPrescriptionWorkflowLogs = async (prescriptionId, userId, from, to, queueName, changeReason) => {
-  return {
-    "prescriptionId": prescriptionId,
-    "fromStatus": from,
-    "toStatus": to,
-    "queueName": queueName,
-    "changedBy": userId,
-    "changeReason": changeReason,
-    "metadata": {
-      "priority": "normal",
-      "reviewer_notes": "Standard review process"
-    },
-  }
+const createPrescriptionWorkflowLogs = (prescriptionId, from, to, queueName, changedBy) => {
+    return {
+        "prescriptionId": prescriptionId,
+        "fromStatus": from,
+        "toStatus": to,
+        "queueName": queueName,
+        "changedBy": changedBy,
+        "changeReason": queueName,
+        "metadata": {
+            "priority": "normal",
+            "reviewer_notes": "Standard review process"
+        },
+    }
 }
+
+
 
 const PrescriptionProcessTab = () => {
     const [filterStatus, setFilterStatus] = useState(0);
     const [workflowSteps, setWorkflowSteps] = useState([]);
     const [prescriptions, setPrescriptions] = useState([]);
     const [notification, setNotification] = useState(undefined);
+    const { user, appUser, isAuthenticated, isLoading, stationName, login, logout } = useUser();
 
+    // Contact Prescriber dialog state
+    const [prescriberDialog, setPrescriberDialog] = useState({
+        isOpen: false,
+        prescription: null
+    });
     // Barcode preview dialog state
     const [barcodeDialog, setBarcodeDialog] = useState({
         isOpen: false,
@@ -66,7 +77,7 @@ const PrescriptionProcessTab = () => {
         }
     };
 
-    const fetchQueues = async () => {
+    const fetchWorkflowSteps = async () => {
         try {
             const response = await fetch('/' + init.appName + '/api/' + 'workflowsteps/selectAll', { headers: headers, });
             const jsonData = await response.json();
@@ -79,7 +90,7 @@ const PrescriptionProcessTab = () => {
     };
 
     const getAllData = async () => {
-        await fetchQueues();
+        await fetchWorkflowSteps();
         await fetchData();
     }
 
@@ -89,7 +100,7 @@ const PrescriptionProcessTab = () => {
 
 
     const addPrescriptionWorkFlowLog = async (data) => {
-        axios.put(workflowlogurl, data)
+        await axios.put(workflowlogurl, data)
             .then(response => console.log(response.data))
             .catch(error => console.error(error));
     }
@@ -99,8 +110,13 @@ const PrescriptionProcessTab = () => {
         showNotification(`Successfully move to ${workflowSteps[prescription.workflowStepId + 1].displayName}`);
         setPrescriptions(prescriptions.map(rx =>
             rx.prescriptionId === id ? { ...rx, workflowStepId: rx.workflowStepId + 1 } : rx
-        ).sort((a, b) => a.workflowStepId - b.workflowStepId));
-        console.log(prescriptions);
+        ));
+        const formStep = workflowSteps.find(w => w.id == prescription.workflowStepId);
+        const toStep = workflowSteps.find(w => w.id == prescription.workflowStepId + 1);
+        const prescriptionWorkflow = createPrescriptionWorkflowLogs(prescription.prescriptionId, formStep.displayName, toStep.displayName, prescription.queueName, appUser.id);
+        console.log(prescriptionWorkflow);
+        addPrescriptionWorkFlowLog(prescriptionWorkflow);
+        // console.log(prescription);
     };
 
     const getWorkflowStepColor = (wokflowStepId) => {
@@ -152,6 +168,38 @@ const PrescriptionProcessTab = () => {
             prescriptionId: null,
             barcodeType: 'code128'
         });
+    };
+
+    const openPrescriberDialog = (rx) => {
+        setPrescriberDialog({
+            isOpen: true,
+            prescription: rx
+        });
+    };
+
+    const closePrescriberDialog = () => {
+        setPrescriberDialog({
+            isOpen: false,
+            prescription: null
+        });
+    };
+
+    const sendPrescriberMessage = async (payload) => {
+        try {
+            // TODO: replace with your actual API endpoint
+            await axios.post(
+                "/" + init.appName + "/api/prescriber/contact",
+                payload,
+                { headers }
+            );
+
+            showNotification("Message sent to prescriber.");
+            closePrescriberDialog();
+
+        } catch (err) {
+            console.error(err);
+            showNotification("Failed to send message.", "error");
+        }
     };
 
     const filteredPrescriptions = filterStatus === 0
@@ -227,7 +275,9 @@ const PrescriptionProcessTab = () => {
                                 }
                                 {
                                     rx.workflowStepId === 2 && (
-                                        <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                                        <button
+                                            onClick={() => openPrescriberDialog(rx)}
+                                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
                                             Contact Prescriber
                                         </button>
                                     )
@@ -261,6 +311,13 @@ const PrescriptionProcessTab = () => {
                 prescriptionId={barcodeDialog.prescriptionId}
                 barcodeType={barcodeDialog.barcodeType}
                 onClose={closeBarcodeDialog}
+            />
+
+            <ContactPrescriberDialog
+                isOpen={prescriberDialog.isOpen}
+                prescription={prescriberDialog.prescription}
+                onClose={closePrescriberDialog}
+                onSubmit={sendPrescriberMessage}
             />
 
         </div>

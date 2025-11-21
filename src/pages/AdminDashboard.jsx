@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth0 } from "@auth0/auth0-react";
+// import { useAuth0 } from "@auth0/auth0-react";
 
 
 import {
@@ -125,22 +125,8 @@ export default function AdminDashboard({ setUser }) {
     { id: 'systemlogs', path: '/systemlogs', icon: TriangleAlert, label: 'Auth Dashboard' },
     { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
   ];
-  const getUser = async (email) => {
-    try {
-      const response = await fetch(`${getUserByEmail}${email}`, { headers: headers });
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const jsonData = await response.json();
-      console.log('Users fetched:', jsonData);
-      
-      return jsonData;
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-     
-    }
-  };
 
-  if (isLoading || !appUser) {
+  if (isLoading && !appUser) {
     return <div className="loading-text">Loading profile...</div>;
   }
 

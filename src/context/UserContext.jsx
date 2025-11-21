@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import DeviceFingerprintService from '../utils/fingerprinting';
 import { getMyIPSafe } from '../utils/util';
@@ -100,6 +100,7 @@ export function UserContextProvider({ children }) {
   const [appUser, setAppUser] = useState(undefined);
   const [error, setError] = useState(undefined);
   const [stationName, setStationName] = useState(`Not Found`);
+  const isSentLog = useRef();
 
   const initializeStation = async () => {
     try {
@@ -175,13 +176,19 @@ export function UserContextProvider({ children }) {
       const users = await response.json();
       setAppUser(users[0]);
       console.log('User fetched:', users[0]);
-      const log = await createSystemAuthLog(users[0].id, users[0].username, `login`, `success`, `none`);
-      await addSystemAuthLog(log);
+      if (!isSentLog.current) {
+        const log = await createSystemAuthLog(users[0].id, users[0].username, `login`, `success`, `none`);
+        await addSystemAuthLog(log);
+        isSentLog.current = true;
+      }
       return users[0];
     } catch (error) {
       console.error('Error fetching data:', error);
-      const log = await createSystemAuthLog(users[0].id, users[0].username, `login`, `failure`, error);
-      await addSystemAuthLog(log);
+      if (!isSentLog.current) {
+        const log = await createSystemAuthLog(users[0].id, users[0].username, `login`, `failure`, error);
+        await addSystemAuthLog(log);
+        isSentLog.current = true;
+      }
     } finally {
 
     }
@@ -203,6 +210,7 @@ export function UserContextProvider({ children }) {
 
   useEffect(() => {
     const initialize = async () => {
+      if (appUser) return;
       console.log(`calling initialize ...`);
       await initializeStation();
       if (!appUser && import.meta.env.VITE_DEV) {
