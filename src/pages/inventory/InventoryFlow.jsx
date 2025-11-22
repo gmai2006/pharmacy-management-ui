@@ -1,16 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
-import { Package, FileText, DollarSign } from 'lucide-react';
+import { Package, FileText, DollarSign, ShoppingCart } from 'lucide-react';
 import init from '../../init';
-import Header from './Header';
-import PrescriptionProcessTab from './PrescriptionProcessTab';
-import InventoryTab from './InventoryTab';
-import ClaimTab from './ClaimTab';
+import InventoryHeader from './InventoryHeader';
+import InventoryProcess from './InventoryProcess';
+import InventoryItem from './InventoryItem';
 
 
-export default function PharmacyWorkflow() {
+export default function InventoryWorkflow() {
   const [activeTab, setActiveTab] = useState('processing');
-  
+
 
   const getWorkflowStepColor = (wokflowStepId) => {
     const colors = {
@@ -25,11 +24,10 @@ export default function PharmacyWorkflow() {
     return colors[wokflowStepId] || 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Header />
+      <InventoryHeader />
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex gap-1 px-6">
@@ -41,27 +39,18 @@ export default function PharmacyWorkflow() {
               }`}
           >
             <FileText size={18} className="inline mr-2" />
-            Prescription Processing
+            Inventory Process
           </button>
+
           <button
-            onClick={() => setActiveTab('inventory')}
-            className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'inventory'
+            onClick={() => setActiveTab('item')}
+            className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'item'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-900'
               }`}
           >
-            <Package size={18} className="inline mr-2" />
-            Inventory Management
-          </button>
-          <button
-            onClick={() => setActiveTab('claims')}
-            className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'claims'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
-              }`}
-          >
-            <DollarSign size={18} className="inline mr-2" />
-            Claims Processing
+            <ShoppingCart size={18} className="inline mr-2" />
+            Inventory Items
           </button>
         </div>
       </div>
@@ -69,15 +58,11 @@ export default function PharmacyWorkflow() {
       {/* Content */}
       <div className="p-6">
         {activeTab === 'processing' && (
-          <PrescriptionProcessTab  />
+          <InventoryProcess getWorkflowStepColor={getWorkflowStepColor}/>
         )}
 
-        {activeTab === 'inventory' && (
-          <InventoryTab getWorkflowStepColor={getWorkflowStepColor}  />
-        )}
-
-        {activeTab === 'claims' && (
-          <ClaimTab getWorkflowStepColor={getWorkflowStepColor}  />
+        {activeTab === 'item' && (
+          <InventoryItem getWorkflowStepColor={getWorkflowStepColor} />
         )}
       </div>
     </div>

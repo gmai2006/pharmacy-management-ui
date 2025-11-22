@@ -1,63 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Eye, EyeOff, CheckCircle, AlertCircle, XCircle, X, Download } from 'lucide-react';
+import { Plus, Trash2, Edit2, CheckCircle, AlertCircle, XCircle, X, Download } from 'lucide-react';
 
-import init from '../../init';
-import PatientDialog from './PatientDialog';
-import Notification from '../../components/Notification';
+import init from '../init';
+import PharmacistDialog from './PharmacistDialog';
+import Notification from '../components/Notification';
 
-const getdataTarget = '/' + init.appName + '/api/' + 'patients/select/100';
-const patientUrl = `/${init.appName}/api/patients/`;
+const getdataTarget = '/' + init.appName + '/api/' + 'pharmacists/select/100';
+const pharmacistUrl = `/${init.appName}/api/pharmacists/`;
 const headers = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
 };
 
-const PatientPage = () => {
+const PharmacistPage = () => {
 
-  const [patients, setPatients] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(undefined);
+  const [pharmacists, setPharmacists] = useState([]);
+  const [selectedPharmacist, setSelectedPharmacist] = useState(undefined);
   const [showModal, setShowModal] = useState(false);
-  const [showSensitiveData, setShowSensitiveData] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [searchFilter, setSearchFilter] = useState('');
+  const [filterActive, setFilterActive] = useState('all');
   const [formData, setFormData] = useState({
-    mrn: '',
-    firstName: '',
-    lastName: '',
-    dob: '',
-    gender: '',
-    contact: {
-      phone: '',
-      email: '',
-      address: '',
-    },
-    isStudentRecord: false,
-    preferredLanguage: 'English',
-    accessibilityPreferences: {
-      large_print: false,
-      braille: false,
-      tts: false,
-    },
+    userId: '',
+    licenseNumber: '',
+    licenseState: '',
+    active: true,
   });
 
   const fetchData = async () => {
     try {
       const response = await fetch(getdataTarget, { headers: headers, });
       const jsonData = await response.json();
-      setPatients(jsonData);
+      setPharmacists(jsonData);
       console.log(jsonData);
     } catch (error) {
       console.error('Error fetching data:', error);
+      showNotification('Failed to load pharmacists', 'error');
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
 
   // Auto-dismiss notification after 3 seconds
   useEffect(() => {
@@ -73,16 +60,15 @@ const PatientPage = () => {
     setNotification({ message, type });
   };
 
-  const handleSubmit = (patientData) => {
-    if (patientData.id) handleUpdatePatient(patientData);
-    else handleAddPatient(patientData);
+  const handleSubmit = (pharmacistData) => {
+    if (pharmacistData.id) handleUpdatePharmacist(pharmacistData);
+    else handleAddPharmacist(pharmacistData);
     setShowModal(false);
     setCurrentPage(1);
   };
 
-  const handleEdit = (patient) => {
-    setSelectedPatient(patient);
-
+  const handleEdit = (pharmacist) => {
+    setSelectedPharmacist(pharmacist);
     setShowModal(true);
   };
 
@@ -91,45 +77,30 @@ const PatientPage = () => {
   };
 
   const confirmDelete = (id) => {
-    handleDeletePatient(id);
+    handleDeletePharmacist(id);
   };
 
-  const toggleSensitiveData = (id) => {
-    setShowSensitiveData({
-      ...showSensitiveData,
-      [id]: !showSensitiveData[id],
-    });
-  };
-
-  const calculateAge = (dob) => {
-    if (!dob) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dob);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  // Filter patients based on search
-  const filteredPatients = patients.filter((patient) => {
+  // Filter pharmacists based on search and status
+  const filteredPharmacists = pharmacists.filter((pharmacist) => {
     const searchLower = searchFilter.toLowerCase();
-    return (
-      patient.firstName.toLowerCase().includes(searchLower) ||
-      patient.lastName.toLowerCase().includes(searchLower) ||
-      patient.mrn?.toLowerCase().includes(searchLower) ||
-      patient.contact.email.toLowerCase().includes(searchLower) ||
-      patient.contact.phone.includes(searchFilter)
-    );
+    const matchesSearch =
+      pharmacist.userId.toLowerCase().includes(searchLower) ||
+      pharmacist.licenseNumber.toLowerCase().includes(searchLower) ||
+      pharmacist.licenseState.toLowerCase().includes(searchLower);
+
+    const matchesFilter =
+      filterActive === 'all' ||
+      (filterActive === 'active' && pharmacist.active) ||
+      (filterActive === 'inactive' && !pharmacist.active);
+
+    return matchesSearch && matchesFilter;
   });
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPharmacists.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPatients = filteredPatients.slice(startIndex, endIndex);
+  const currentPharmacists = filteredPharmacists.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -140,60 +111,58 @@ const PatientPage = () => {
     setCurrentPage(1);
   };
 
-  // Handle delete user
-  const handleDeletePatient = async (id) => {
+  // Handle delete pharmacist
+  const handleDeletePharmacist = async (id) => {
     try {
-      const response = await fetch(`${patientUrl}${id}`, {
+      const response = await fetch(`${pharmacistUrl}${id}`, {
         method: 'DELETE',
         headers: headers
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete user');
+        throw new Error(errorData.message || 'Failed to delete pharmacist');
       }
 
-      setPatients(prev => prev.filter(user => user.id !== id));
+      setPharmacists(prev => prev.filter(pharmacist => pharmacist.id !== id));
       setDeleteConfirmId(undefined);
-      showNotification('User deleted successfully', 'success');
+      showNotification('Pharmacist deleted successfully', 'success');
     } catch (error) {
-      console.error('Error deleting user:', error);
-      showNotification(error.message || 'Failed to delete user', 'error');
-    } finally {
+      console.error('Error deleting pharmacist:', error);
+      showNotification(error.message || 'Failed to delete pharmacist', 'error');
     }
   };
 
-  // Handle add user
-  const handleAddPatient = async (patientData) => {
+  // Handle add pharmacist
+  const handleAddPharmacist = async (pharmacistData) => {
     try {
-      const response = await fetch(patientUrl, {
+      const response = await fetch(pharmacistUrl, {
         method: 'PUT',
         headers: headers,
         body: JSON.stringify({
-          ...patientData
+          ...pharmacistData
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
+        throw new Error(errorData.message || 'Failed to create pharmacist');
       }
 
-      const newPatient = await response.json();
-      setPatients(prev => [newPatient, ...prev]);
+      const newPharmacist = await response.json();
+      setPharmacists(prev => [newPharmacist, ...prev]);
       setShowModal(false);
-      setSelectedPatient(undefined);
-      showNotification('User created successfully', 'success');
+      setSelectedPharmacist(undefined);
+      showNotification('Pharmacist created successfully', 'success');
     } catch (error) {
-      console.error('Error adding user:', error);
-      showNotification(error.message || 'Failed to create user', 'error');
-    } finally {
+      console.error('Error adding pharmacist:', error);
+      showNotification(error.message || 'Failed to create pharmacist', 'error');
     }
   };
 
-  const handleUpdatePatient = async (data) => {
+  const handleUpdatePharmacist = async (data) => {
     try {
-      const response = await fetch(`${patientUrl}`, {
+      const response = await fetch(`${pharmacistUrl}`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
@@ -203,71 +172,48 @@ const PatientPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update user');
+        throw new Error(errorData.message || 'Failed to update pharmacist');
       }
 
-      const updatedPatient = await response.json();
-      setPatients(prev =>
-        prev.map(patient =>
-          patient.id === data.id ? updatedPatient : patient
+      const updatedPharmacist = await response.json();
+      setPharmacists(prev =>
+        prev.map(pharmacist =>
+          pharmacist.id === data.id ? updatedPharmacist : pharmacist
         )
       );
       setShowModal(false);
-      setSelectedPatient(undefined);
-      showNotification('User updated successfully', 'success');
+      setSelectedPharmacist(undefined);
+      showNotification('Pharmacist updated successfully', 'success');
     } catch (error) {
-      console.error('Error updating user:', error);
-      showNotification(error.message || 'Failed to update user', 'error');
-    } finally {
-
+      console.error('Error updating pharmacist:', error);
+      showNotification(error.message || 'Failed to update pharmacist', 'error');
     }
   };
 
-  // Export patients to CSV
+  // Export pharmacists to CSV
   const exportToCSV = () => {
-    if (patients.length === 0) {
-      showNotification('No patients to export', 'error');
+    if (pharmacists.length === 0) {
+      showNotification('No pharmacists to export', 'error');
       return;
     }
 
     // Prepare CSV headers
     const csvHeaders = [
       'ID',
-      'First Name',
-      'Last Name',
-      'MRN',
-      'Date of Birth',
-      'Age',
-      'Gender',
-      'Email',
-      'Phone',
-      'Address',
-      'Preferred Language',
-      'FERPA Student Record',
-      'Large Print',
-      'Braille',
-      'Text-to-Speech'
+      'User ID',
+      'License Number',
+      'License State',
+      'Status'
     ];
 
     // Prepare CSV rows
-    const csvRows = patients.map(patient => {
-      const age = calculateAge(patient.dob);
+    const csvRows = pharmacists.map(pharmacist => {
       return [
-        patient.id,
-        patient.firstName || '',
-        patient.lastName || '',
-        patient.mrn || '',
-        patient.dob ? new Date(patient.dob).toISOString().split('T')[0] : '',
-        age,
-        patient.gender || '',
-        patient.contact.email || '',
-        patient.contact.phone || '',
-        patient.contact.address || '',
-        patient.preferredLanguage || 'English',
-        patient.isStudentRecord ? 'Yes' : 'No',
-        patient.accessibilityPreferences.large_print ? 'Yes' : 'No',
-        patient.accessibilityPreferences.braille ? 'Yes' : 'No',
-        patient.accessibilityPreferences.tts ? 'Yes' : 'No'
+        pharmacist.id,
+        pharmacist.userId || '',
+        pharmacist.licenseNumber || '',
+        pharmacist.licenseState || '',
+        pharmacist.active ? 'Active' : 'Inactive'
       ];
     });
 
@@ -290,16 +236,16 @@ const PatientPage = () => {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    link.setAttribute('download', `patients_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `pharmacists_export_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    showNotification('Patients exported successfully', 'success');
+    showNotification('Pharmacists exported successfully', 'success');
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Notification Toast */}
@@ -309,25 +255,25 @@ const PatientPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Patient Management</h1>
-          <p className="text-gray-600">Manage and generate patient records</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Pharmacist Management</h1>
+          <p className="text-gray-600">Manage pharmacist licenses and credentials</p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-4 mb-8 flex-wrap items-center">
           <button
             onClick={() => {
-              setSelectedPatient(undefined);
+              setSelectedPharmacist(undefined);
               setShowModal(true);
             }}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
           >
             <Plus size={20} />
-            Add Patient
+            Add Pharmacist
           </button>
           <input
             type="text"
-            placeholder="Search by name, MRN, email, or phone..."
+            placeholder="Search by user ID, license number, or state..."
             value={searchFilter}
             onChange={(e) => {
               setSearchFilter(e.target.value);
@@ -336,15 +282,28 @@ const PatientPage = () => {
             className="flex-1 min-w-64 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
+          <select
+            value={filterActive}
+            onChange={(e) => {
+              setFilterActive(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
           <div className="flex items-center gap-4">
             <div className="text-lg font-semibold text-gray-700">
-              Total Patients: <span className="text-blue-600">{patients.length}</span>
+              Total Pharmacists: <span className="text-blue-600">{pharmacists.length}</span>
             </div>
             <button
               onClick={exportToCSV}
-              disabled={patients.length === 0}
+              disabled={pharmacists.length === 0}
               className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
-              title="Export patients to CSV"
+              title="Export pharmacists to CSV"
             >
               <Download size={20} />
               Export CSV
@@ -354,18 +313,17 @@ const PatientPage = () => {
 
         {/* Form Modal */}
         {showModal && (
-          <PatientDialog data={selectedPatient} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
+          <PharmacistDialog data={selectedPharmacist} setShowModal={setShowModal} showNotification={showNotification} addOrUpdate={handleSubmit} />
         )}
 
-     
         {/* Delete Confirmation Modal */}
         {deleteConfirmId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-sm w-full">
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Patient</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Pharmacist</h3>
                 <p className="text-gray-600 mb-6">
-                  Are you sure you want to delete this patient? This action cannot be undone.
+                  Are you sure you want to delete this pharmacist? This action cannot be undone.
                 </p>
                 <div className="flex gap-3 justify-end">
                   <button
@@ -386,11 +344,11 @@ const PatientPage = () => {
           </div>
         )}
 
-        {/* Patients Table */}
+        {/* Pharmacists Table */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {patients.length === 0 ? (
+          {pharmacists.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-gray-500 text-lg">No patients yet. Add one to get started!</p>
+              <p className="text-gray-500 text-lg">No pharmacists yet. Add one to get started!</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -398,25 +356,16 @@ const PatientPage = () => {
                 <thead className="bg-gray-100 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Name
+                      User ID
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      MRN
+                      License Number
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Age
+                      License State
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Gender
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Language
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                      Sensitive Data
+                      Status
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                       Actions
@@ -424,68 +373,42 @@ const PatientPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentPatients.map((patient) => (
+                  {currentPharmacists.map((pharmacist) => (
                     <tr
-                      key={patient.id}
+                      key={pharmacist.id}
                       className="border-b border-gray-200 hover:bg-gray-50 transition"
                     >
                       <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                        {patient.firstName} {patient.lastName}
-                        {patient.isStudentRecord && (
-                          <span className="ml-2 inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded font-semibold">
-                            FERPA
-                          </span>
-                        )}
+                        {pharmacist.userId}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {patient.mrn || '—'}
+                        {pharmacist.licenseNumber || '—'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {calculateAge(patient.dob)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {patient.gender || '—'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {patient.contact.email || '—'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {patient.preferredLanguage}
+                        {pharmacist.licenseState || '—'}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <button
-                          onClick={() => toggleSensitiveData(patient.id)}
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition"
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            pharmacist.active
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
                         >
-                          {showSensitiveData[patient.id] ? (
-                            <>
-                              <Eye size={16} />
-                              Hide
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff size={16} />
-                              Show
-                            </>
-                          )}
-                        </button>
-                        {showSensitiveData[patient.id] && (
-                          <div className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono text-gray-700">
-                            {patient.sensitive_data}
-                          </div>
-                        )}
+                          {pharmacist.active ? 'Active' : 'Inactive'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleEdit(patient)}
+                            onClick={() => handleEdit(pharmacist)}
                             className="text-blue-600 hover:text-blue-800 transition"
                             title="Edit"
                           >
                             <Edit2 size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(patient.id)}
+                            onClick={() => handleDelete(pharmacist.id)}
                             className="text-red-600 hover:text-red-800 transition"
                             title="Delete"
                           >
@@ -502,7 +425,7 @@ const PatientPage = () => {
         </div>
 
         {/* Pagination Controls */}
-        {patients.length > 0 && (
+        {pharmacists.length > 0 && (
           <div className="mt-6 bg-white rounded-lg shadow p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               {/* Items Per Page Selector */}
@@ -525,7 +448,7 @@ const PatientPage = () => {
 
               {/* Page Info */}
               <div className="text-sm text-gray-600 font-medium">
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredPatients.length)} of {filteredPatients.length} patients
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredPharmacists.length)} of {filteredPharmacists.length} pharmacists
               </div>
 
               {/* Pagination Buttons */}
@@ -599,27 +522,21 @@ const PatientPage = () => {
           </div>
         )}
 
-        {/* Accessibility Information */}
-        {patients.length > 0 && (
+        {/* Pharmacist Status Summary */}
+        {pharmacists.length > 0 && (
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">Accessibility Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3">License Status Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-blue-700">
-                  <strong>Large Print:</strong>{' '}
-                  {patients.filter((p) => p.accessibilityPreferences.large_print).length}
+                  <strong>Active Licenses:</strong>{' '}
+                  {pharmacists.filter((p) => p.active).length}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-blue-700">
-                  <strong>Braille:</strong>{' '}
-                  {patients.filter((p) => p.accessibilityPreferences.braille).length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-blue-700">
-                  <strong>Text-to-Speech:</strong>{' '}
-                  {patients.filter((p) => p.accessibilityPreferences.tts).length}
+                  <strong>Inactive Licenses:</strong>{' '}
+                  {pharmacists.filter((p) => !p.active).length}
                 </p>
               </div>
             </div>
@@ -630,4 +547,4 @@ const PatientPage = () => {
   );
 };
 
-export default PatientPage;
+export default PharmacistPage;

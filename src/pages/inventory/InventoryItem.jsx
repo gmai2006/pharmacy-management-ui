@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, Plus, Search, TrendingUp, X } from 'lucide-react';
-import init from '../init';
+import init from '../../init';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'inventory/select/100';
 const createDataTarget = '/' + init.appName + '/api/' + 'inventoryitems/';
@@ -9,7 +9,7 @@ const headers = {
   'Accept': 'application/json'
 };
 
-export default function PharmacyInventory() {
+export default function InventoryItem() {
   const [data, setData] = useState([]);
 
   const fetchData = async () => {
@@ -26,91 +26,6 @@ export default function PharmacyInventory() {
   useEffect(() => {
     fetchData();
   }, []);
-
-
-  // Mock inventory data
-  // const [inventoryItems] = useState([
-  //   {
-  //     id: '1',
-  //     ndc: '0093-0061-01',
-  //     sku: 'MET-500-100',
-  //     name: 'Metformin HCl',
-  //     strength: '500mg',
-  //     form: 'Tablet',
-  //     pack_size: 100,
-  //     attributes: {
-  //       manufacturer: 'Generic Pharma',
-  //       dea_class: 'non-controlled',
-  //       controlled: false
-  //     },
-  //     batches: [
-  //       {
-  //         id: 'b1',
-  //         lotNumber: 'LOT-2025-001',
-  //         expiryDate: '2026-12-31',
-  //         quantityOnHand: 450,
-  //         location: 'Shelf A1',
-  //         wholesalerId: 1
-  //       },
-  //       {
-  //         id: 'b2',
-  //         lotNumber: 'LOT-2025-002',
-  //         expiryDate: '2027-06-30',
-  //         quantityOnHand: 300,
-  //         location: 'Shelf A2',
-  //         wholesalerId: 1
-  //       }
-  //     ]
-  //   },
-  //   {
-  //     id: '2',
-  //     ndc: '0093-2194-01',
-  //     sku: 'AMO-250-60',
-  //     name: 'Amoxicillin',
-  //     strength: '250mg',
-  //     form: 'Capsule',
-  //     pack_size: 60,
-  //     attributes: {
-  //       manufacturer: 'Antibiotic Labs',
-  //       dea_class: 'non-controlled',
-  //       controlled: false
-  //     },
-  //     batches: [
-  //       {
-  //         id: 'b3',
-  //         lotNumber: 'LOT-2025-045',
-  //         expiryDate: '2026-03-15',
-  //         quantityOnHand: 120,
-  //         location: 'Shelf B1',
-  //         wholesalerId: 2
-  //       }
-  //     ]
-  //   },
-  //   {
-  //     id: '3',
-  //     ndc: '0228-3904-01',
-  //     sku: 'OXY-5-100',
-  //     name: 'Oxycodone HCl',
-  //     strength: '5mg',
-  //     form: 'Tablet',
-  //     pack_size: 100,
-  //     attributes: {
-  //       manufacturer: 'Controlled Pharma',
-  //       dea_class: 'Schedule II',
-  //       controlled: true
-  //     },
-  //     batches: [
-  //       {
-  //         id: 'b4',
-  //         lotNumber: 'LOT-2025-089',
-  //         expiryDate: '2025-12-15',
-  //         quantityOnHand: 50,
-  //         location: 'Safe Room C',
-  //         wholesalerId: 1
-  //       }
-  //     ]
-  //   }
-  // ]);
 
   // State management
   const [expandedItem, setExpandedItem] = useState(null);

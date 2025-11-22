@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import init from "../../init";
-import InventoryFilter from './InventoryFilter';
+import InventoryFilter from '../prescription/InventoryFilter';
 
-const InventoryTab = ({ getWorkflowStepColor }) => {
+const InventoryProcess = ({ getWorkflowStepColor }) => {
     const [inventory, setInventory] = useState([]);
     const [filterStatus, setFilterStatus] = useState(false);
     const [isFilter, setIsFilter] = useState(false);
@@ -115,4 +115,4 @@ const InventoryTab = ({ getWorkflowStepColor }) => {
         </div>
     )
 }
-export default InventoryTab;
+export default InventoryProcess;

@@ -194,20 +194,6 @@ export function UserContextProvider({ children }) {
     }
   };
 
-  const value = useMemo(() => ({
-    user,
-    appUser,
-    isAuthenticated,
-    isLoading,
-    stationName,
-    login: () => loginWithRedirect(),
-    logout: () =>
-      logout({ logoutParams: { returnTo: window.location.origin } }),
-    getAccessTokenSilently
-  }), [user, isLoading]);
-
-
-
   useEffect(() => {
     const initialize = async () => {
       if (appUser) return;
@@ -223,6 +209,20 @@ export function UserContextProvider({ children }) {
     }
     initialize();
   }, []);
+
+  const value = {
+    user,
+    appUser,
+    isAuthenticated,
+    isLoading,
+    stationName,
+    login: () => loginWithRedirect(),
+    logout: () =>
+      logout({ logoutParams: { returnTo: window.location.origin } }),
+    getAccessTokenSilently
+  };
+
+
 
   return (
     <UserContext.Provider value={value}>
