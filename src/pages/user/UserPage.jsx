@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Download } from 'lucide-react';
 
 import init from "../../init";
-import UserSummary from '../user/UserSummary';
+import UserSummary from './UserSummary';
 import Notification from '../../components/Notification';
 import UserDialog from './UserDialog';
-import {convertJavaLocalDateTimeToDate} from '../../utils/util';
 
 const headers = {
     'Content-Type': 'application/json',

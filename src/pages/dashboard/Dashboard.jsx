@@ -15,9 +15,7 @@ import {
 } from 'lucide-react';
 
 import PharmacyWorkflow from '../prescription/PharmacyFlow';
-import PharmacyPOSSystem from '../PharmacyPOSSystem';
 import PharmacyFinancialReports from '../report/PharmacyFinancialReports';
-import PickupDashboard from '../pickup/PickupDashboard';
 
 import UserPage from '../user/UserPage';
 import PatientPage from '../patient/PatientPage';
@@ -36,6 +34,7 @@ import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import InventoryWorkflow from '../inventory/InventoryFlow';
 import ClaimFlow from '../claim/ClaimFlow';
+import ContactLogTestPage from '../prescription/TestPrescriptionLog';
 
 export default function Dashboard() {
   const { user, appUser, isAuthenticated, isLoading, stationName, login, logout } = useUser();
@@ -58,6 +57,7 @@ export default function Dashboard() {
     { id: 'logs', path: '/logs', icon: TriangleAlert, label: 'Auth Logs' },
     { id: 'systemlogs', path: '/systemlogs', icon: TriangleAlert, label: 'Auth Dashboard' },
     { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
+    { id: 'prescriptonlog', path: '/testprescrptionlog', icon: Settings, label: 'testprescrptionlog' },
 ];
 
   if (!appUser) {
@@ -84,12 +84,12 @@ export default function Dashboard() {
             <Route path="/users" element={<UserPage />} />
             <Route path="/patients" element={<PatientPage />} />
             <Route path="/pharmacist" element={<PharmacistPage />} />
-            
             <Route path="/alert" element={<AlertPage />} />
             <Route path="/analytics" element={<PharmacyFinancialReports icon={BarChart3} />} />
             <Route path="/logs" element={<AuthLogViewer />} />
             <Route path="/systemlogs" element={<AdminAuthDashboard />} />
             <Route path="/settings" element={<DirMarginDashboard />} />
+            <Route path="/testprescrptionlog" element={<ContactLogTestPage />} />
           </Routes>
         </div>
 

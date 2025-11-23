@@ -9,6 +9,8 @@ import axios from 'axios';
 import ContactPrescriberDialog from './ContactPrescriberDialog';
 
 const getdataTarget = '/' + init.appName + '/api/' + 'view/prescriptions/100';
+const getPresciptionUrl = '/' + init.appName + '/api/' + 'prescriptions/find';
+const prescriptionUrl = '/' + init.appName + '/api/' + 'prescriptions/';
 const workflowlogurl = '/' + init.appName + '/api/' + 'prescriptionworkflowlogs/';
 const headers = {
     'Content-Type': 'application/json',
@@ -37,7 +39,7 @@ const PrescriptionProcessTab = () => {
     const [workflowSteps, setWorkflowSteps] = useState([]);
     const [prescriptions, setPrescriptions] = useState([]);
     const [notification, setNotification] = useState(undefined);
-    const { user, appUser, isAuthenticated, isLoading, stationName, login, logout } = useUser();
+    const { appUser } = useUser();
 
     // Contact Prescriber dialog state
     const [prescriberDialog, setPrescriberDialog] = useState({
@@ -101,22 +103,37 @@ const PrescriptionProcessTab = () => {
 
     const addPrescriptionWorkFlowLog = async (data) => {
         await axios.put(workflowlogurl, data)
-            .then(response => console.log(response.data))
+            .then(response => response.data)
             .catch(error => console.error(error));
     }
 
-    const moveToNextStep = (id) => {
-        const prescription = prescriptions.find(pres => pres.prescriptionId === id);
-        showNotification(`Successfully move to ${workflowSteps[prescription.workflowStepId + 1].displayName}`);
+    const getPrescriptionById = async (id) => {
+        return await axios.get(`${getPresciptionUrl}/${id}`)
+            .then(response => response.data)
+            .catch(error => console.error(error));
+    }
+
+    const updatePrescription = async (prescription) => {
+        await axios.post(prescriptionUrl, prescription)
+            .then(response => response.data)
+            .catch(error => console.error(error));
+    }
+
+    const moveToNextStep = async (id) => {
+        const prescriptionSummary = prescriptions.find(pres => pres.prescriptionId === id);
+        const prescription = await getPrescriptionById(id);
+        showNotification(`Successfully move to ${workflowSteps[prescriptionSummary.workflowStepId + 1].displayName}`);
         setPrescriptions(prescriptions.map(rx =>
             rx.prescriptionId === id ? { ...rx, workflowStepId: rx.workflowStepId + 1 } : rx
         ));
-        const formStep = workflowSteps.find(w => w.id == prescription.workflowStepId);
-        const toStep = workflowSteps.find(w => w.id == prescription.workflowStepId + 1);
-        const prescriptionWorkflow = createPrescriptionWorkflowLogs(prescription.prescriptionId, formStep.displayName, toStep.displayName, prescription.queueName, appUser.id);
+        const formStep = workflowSteps.find(w => w.id == prescriptionSummary.workflowStepId);
+        const toStep = workflowSteps.find(w => w.id == prescriptionSummary.workflowStepId + 1);
+        const prescriptionWorkflow = createPrescriptionWorkflowLogs(prescriptionSummary.prescriptionId, formStep.displayName, toStep.displayName, prescriptionSummary.queueName, appUser.id);
+        prescription.workflowStepId = prescription.workflowStepId + 1;
+        await updatePrescription(prescription);
         console.log(prescriptionWorkflow);
-        addPrescriptionWorkFlowLog(prescriptionWorkflow);
-        // console.log(prescription);
+        await addPrescriptionWorkFlowLog(prescriptionWorkflow);
+        console.log(prescription);
     };
 
     const getWorkflowStepColor = (wokflowStepId) => {
@@ -296,7 +313,7 @@ const PrescriptionProcessTab = () => {
                                         <button
                                             className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
                                         >
-                                            Complete Pickup
+                                            Ready for Pickup
                                         </button>
                                     )}
                             </div>
